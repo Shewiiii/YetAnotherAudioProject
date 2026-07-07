@@ -12,7 +12,7 @@ from utils import read_file, common_freq
 # Bass shelf level is arbitrary to match preference.
 
 PHONES = "phones/*.txt"
-OUTPUT = "Shewi Target (HRTF).txt"
+OUTPUT = "Shewi Target (DFHRTF).txt"
 
 
 files = sorted(Path().glob(PHONES))
