@@ -31,7 +31,7 @@ Bass shelf level is arbitrary to match my current preference.
 ### Results
 
 ![Frequency responses used to make the new target](phones/graph.png)
-Only 4 IEMs have been studied for now. The following target is their average:
+The following target is their average:
 
 ![Shewi Target, DFHRTF compliant](graph.png)
 (Happy to see that my old stupid target ("Shewi Target") had almost the correct shape at 10k !)
