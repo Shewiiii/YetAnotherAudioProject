@@ -22,7 +22,7 @@ I made sure it follows more or less the preference bounds, so the tilt is cohere
 
 It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in the diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
 
-However, for that exact reason, a "one-fits-all" target does not exist, even at the individual scale: frequency response varies so much from individual to individual above 10k or less that the idea of single-line adherence becomes really irrelevant.
+However, for that exact reason, a "one-fits-all" target does not exist, even at the individual scale: frequency response varies so much from individual to individual above 3k that the idea of single-line adherence becomes really irrelevant.
 It is still insteresting to establish, as it
 tells what sound signature on average my brain expects to hear.
 
