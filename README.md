@@ -20,7 +20,7 @@ Technical explanation:
 Each IEM in the "phones" folder has been equalized as coherently as possible to my DFHRTF (Diffuse Field Head Related Transfer Function), so I can't hear any peaks and dips from a sinesweep, and sounds flat.  
 I made sure it follows more or less the preference bounds, so the tilt is coherent (-1dB/ocatve).
 
-It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in a diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
+It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in the diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
 
 However, for that exact reason, a "one-fits-all" target does not exist, even at the individual scale: frequency response varies so much from individual to individual above 10k or less that the idea of single-line adherence becomes really irrelevant.
 It is still insteresting to establish, as it
