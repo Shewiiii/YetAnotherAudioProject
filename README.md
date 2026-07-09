@@ -36,11 +36,15 @@ The following target is their average:
 ![Shewi Target, DFHRTF compliant](graph.png)
 (Happy to see that my old stupid target ("Shewi Target") had almost the correct shape at 10k !)
 
-Coeff: 3 from 4 kHz to 17kHz, 1 otherwise  
-Data points with a logarithmic distribution, see the target txt file.
 
 GRAPHS JUST FOR FUN, again target adherence does not tell the full story.  
 Truthear Pure with narrow bore tips, while being perfectible in the treble, does sound insanely good on my ears though. I currently do not have other IEMs to test in the top.
+
+Coeff set to reward pinna HRTF adherence and attenuate bass importance (way too much data points).  
+Data above 16kHz is ignored in the score calculation.  
+Data points have a logarithmic distribution, see the target txt file.
+
+Issue to solve: bass has way too much weight.
 
 ![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.jpg)
 ![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.jpg)

@@ -17,10 +17,17 @@ NORMALIZATION_POINT = 223  # 223 is ~500hz, see generated target from average.py
 NORMALIZATION_SPL = 60  # in dB but probably does not matter
 EXCLUDE_PROJECTS = True  # Excluse prototypes not on the market
 
-# Gives more weight to the upper midrange/treble
-WEIGHT_START = 272  # 272: ~1kHz, 367: ~4kHz
-WEIGHT_END = 460  # 432: ~10kHz, 460: ~17kHz
-COEFF = 3
+# Coeffs
+PINNA_WEIGHT_START = 367  # 272: ~1kHz, 367: ~4kHz
+PINNA_WEIGHT_END = 459  # 432: ~10kHz, 459: ~15kHz
+PINNA_COEFF = 4
+
+BASS_WEIGHT_START = 0
+BASS_WEIGHT_END = 112  # 112: 100Hz
+BASS_COEFF = 0.3
+
+# Ignore FR above x Hz. 463: ~16kHz, should probably not be changed
+DATA_LIMIT = 463
 
 files = sorted(Path().glob(FREQUENCY_RESPONSES))
 frequency_response_dict_unnormalized = {}
@@ -37,6 +44,7 @@ target_freq, target_spl_unnormalized = read_file(TARGET)
 target_spl = normalize(
     np.interp(np.log10(common_freq), np.log10(target_freq), target_spl_unnormalized)
 )
+target_spl_sliced = target_spl[:DATA_LIMIT]
 
 for iem, (freq, spl) in frequency_response_dict_unnormalized.items():
     # Interpolate and normalize spl data
@@ -46,12 +54,16 @@ for iem, (freq, spl) in frequency_response_dict_unnormalized.items():
 # Score the delta vs. the target
 deltas: Dict[str, int] = {}
 weights = np.ones_like(common_freq, dtype=float)
-weights[WEIGHT_START:WEIGHT_END] = COEFF
+weights[PINNA_WEIGHT_START:PINNA_WEIGHT_END] = PINNA_COEFF
+weights[BASS_WEIGHT_START:BASS_WEIGHT_END] = BASS_COEFF
+weights_sliced = weights[:DATA_LIMIT]  # To match list size of target_spl_sliced for np
 
 deltas: Dict[str, int] = {}
 for iem, spl in spl_dict.items():
     if not EXCLUDE_PROJECTS or "project" not in iem.lower():
-        deltas[iem] = int(np.sum(np.abs(target_spl - spl) * weights))
+        deltas[iem] = int(
+            np.sum(np.abs(target_spl_sliced - spl[:DATA_LIMIT]) * weights_sliced)
+        )
 
 deltas = dict(sorted(deltas.items(), key=lambda item: item[1]))
 deltas_iem = list(deltas.keys())
@@ -93,7 +105,7 @@ if GRAPH_OF_SCORES:
 
     plt.xlabel("Score")
     plt.title(
-        f"Most target adherent IEMs (Top {SHOW}, {WEIGHT_START}~{WEIGHT_END} coeff: {COEFF})"
+        f"Most target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
     )
     plt.bar_label(plot, padding=5)
     # Show the hole iem name
@@ -131,7 +143,7 @@ if GRAPH_OF_SCORES:
 
     plt.xlabel("Score")
     plt.title(
-        f"Worst target adherent IEMs (Top {SHOW}, {WEIGHT_START}~{WEIGHT_END} coeff: {COEFF})"
+        f"Worst target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
     )
     plt.bar_label(plot, padding=5)
     # Show the hole iem name
