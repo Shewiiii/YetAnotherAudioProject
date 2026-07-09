@@ -37,24 +37,11 @@ The following target is their average:
 (Happy to see that my old stupid target ("Shewi Target") had almost the correct shape at 10k !)
 
 Coeff: 3 from 4 kHz to 17kHz, 1 otherwise  
-Data points with a logarithmic distribution, see the target
+Data points with a logarithmic distribution, see the target txt file.
 
-```
-Closest IEMs to Shewi Target (DFHRTF).txt:
-1. CrinEar Reference (Standard bore tips) (AVG) with 6769 points
-2. Truthear Pure (KBEAR 4540 'Coffee' Tips) (AVG) with 6548 points
-3. CrinEar Daybreak (Shortwide tips) S1 (AVG) with 6463 points
-4. ZiiGaat x Hangout.Audio Odyssey 2 (AVG) with 6445 points
-5. Truthear Pure (Narrow bore tips) (AVG) with 6424 points
-6. Letshuoer Cadenza 12 (AVG) with 6407 points
-7. Subtonic Storm (AVG) with 6335 points
-8. Moondrop Space Travel 2 (AVG) with 6330 points
-9. Moondrop Ray DSP (AVG) with 6240 points
-10. 7Hz x Crinacle Divine (AVG) with 6231 points
-```
+GRAPHS JUST FOR FUN, again target adherence does not tell the full story.  
+Truthear Pure with narrow bore tips, while being perfectible in the treble, does sound insanely good on my ears though. I currently do not have other IEMs to test in the top.
 
-According to my very simplified model, the Pure with Coffee tips is supposed to be the second most anatomically adapted sounding IEM. However, a fairly large amount of equalization (changes in the sound) was required to really sound neutral to my ears. This is mainly due to resonance peaks in the treble.
-
-![Truthear Pure's frequency response with Coffee tips, vs. ideal EQ](pure_coffee.png)
-
-We can conclude one of two things here: 1. no IEM is still "perfect" for my anatomy (excluding CrinEar Reference which I have not tried), OR 2. HpTF effect (changes in sound by the IEM's load unrelated to anatomy) is so important in the treble it's actually impossible to predict which IEM perfectly suits me.
+![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.jpg)
+![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.jpg)
+![Histogram of scores of the whole database](plots/histogram.jpg)
