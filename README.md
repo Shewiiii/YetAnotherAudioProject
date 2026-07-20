@@ -17,7 +17,7 @@ In simple terms, hopefully, the goal of this project is to:
 2.  Find the IEM with **potentially** the closest sound to that ideal.
 
 Technical explanation:  
-Each IEM in the "phones" folder has been equalized as coherently as possible to my DFHRTF (Diffuse Field Head Related Transfer Function), so I can't hear any peaks and dips from a sinesweep, and sounds flat.  
+Each IEM in the "neutral_fr" folder has been equalized as coherently as possible to my DFHRTF (Diffuse Field Head Related Transfer Function), so I can't hear any peaks and dips from a sinesweep, and sounds flat.  
 I made sure it follows more or less the preference bounds, so the tilt is coherent (-1dB/ocatve).
 
 It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in the diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
@@ -30,7 +30,7 @@ Bass shelf level is arbitrary to match my current preference.
 
 ### Results
 
-![Frequency responses used to make the new target](phones/graph.png)
+![Frequency responses used to make the new target](neutral_fr/graph.png)
 The following target is their average:
 
 ![Shewi Target, DFHRTF compliant](graph.png)
