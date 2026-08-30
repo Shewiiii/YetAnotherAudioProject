@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Dict
-import numpy as np
-from utils import read_file, common_freq
 
-import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import numpy as np
 
+from utils import common_freq, read_file
 
 GRAPH_OF_SCORES = True
 SHOW = 50
@@ -52,13 +51,13 @@ for iem, (freq, spl) in frequency_response_dict_unnormalized.items():
     spl_dict[iem] = spl_interp
 
 # Score the delta vs. the target
-deltas: Dict[str, int] = {}
+deltas: dict[str, int] = {}
 weights = np.ones_like(common_freq, dtype=float)
 weights[PINNA_WEIGHT_START:PINNA_WEIGHT_END] = PINNA_COEFF
 weights[BASS_WEIGHT_START:BASS_WEIGHT_END] = BASS_COEFF
 weights_sliced = weights[:DATA_LIMIT]  # To match list size of target_spl_sliced for np
 
-deltas: Dict[str, int] = {}
+deltas: dict[str, int] = {}
 for iem, spl in spl_dict.items():
     if not EXCLUDE_PROJECTS or "project" not in iem.lower():
         deltas[iem] = int(

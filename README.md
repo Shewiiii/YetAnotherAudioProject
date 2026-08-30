@@ -44,6 +44,6 @@ Coeff set to reward pinna HRTF adherence and attenuate bass importance (way too 
 Data above 16kHz is ignored in the score calculation.  
 Data points have a logarithmic distribution, see the target txt file.
 
-![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.jpg)
-![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.jpg)
-![Histogram of scores of the whole database](plots/histogram.jpg)
+![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.png)
+![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.png)
+![Histogram of scores of the whole database](plots/histogram.png)

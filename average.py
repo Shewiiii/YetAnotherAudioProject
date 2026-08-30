@@ -1,8 +1,10 @@
 from pathlib import Path
-import numpy as np
-from utils import read_file, common_freq
 
-# Average frequency response files ("phones") in the following folder.
+import numpy as np
+
+from utils import common_freq, read_file
+
+# Average frequency response files in the neutral_fr folder.
 # Each IEM has been EQed as coherently as possible to my DFHRTF (Diffuse Field Head Related Transfer Function, see README)
 # by ear, using 5128 data, sinesweeps, and many fails and retries,
 # so it "sounds flat" not for the population average, but for me.
@@ -11,7 +13,7 @@ from utils import read_file, common_freq
 # tells what sound signature on average my brain expects to hear.
 # Bass shelf level is arbitrary to match preference.
 
-PHONES = "phones/*.txt"
+PHONES = "neutral_fr/*.txt"
 OUTPUT = "Shewi Target (DFHRTF).txt"
 
 
