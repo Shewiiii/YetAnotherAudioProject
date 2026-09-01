@@ -28,6 +28,9 @@ BASS_COEFF = 0.3
 # Ignore FR above x Hz. 463: ~16kHz, should probably not be changed
 DATA_LIMIT = 463
 
+# delta_score = COMP - [actual sum of deltas]; so the higher score means a better adherence
+COMPENSATION = 6000
+
 files = sorted(Path().glob(FREQUENCY_RESPONSES))
 frequency_response_dict_unnormalized = {}
 for file in files:
@@ -72,16 +75,18 @@ TOTAL_IEM_COUNT = len(deltas_iem)
 
 # Adjust delta_score so the highest score = best adherence
 for i in range(TOTAL_IEM_COUNT):
-    deltas_score[i] = deltas_score[-1] - deltas_score[i]
+    deltas_score[i] = round((COMPENSATION - deltas_score[i]) / 600, 2)
 
 
 # Results
-if GRAPH_OF_SCORES:
+def graphs() -> None:
     top_iem = deltas_iem[:SHOW]
     top_score = deltas_score[:SHOW]
     bottom_score = deltas_score[-SHOW:]
     bottom_iem = deltas_iem[-SHOW:]
-    max_limit = max(deltas_score) + 500
+    bound_score = (
+        max(deltas_score) + 0.5
+    )  # Padding so the score bars don't go out the graph
 
     # Cool colors !
     cmap = mcolors.LinearSegmentedColormap.from_list(
@@ -103,6 +108,8 @@ if GRAPH_OF_SCORES:
     plot = plt.barh(top_iem, top_score, color=bar_colors_top)
 
     plt.xlabel("Score")
+    plt.xticks(range(0, int(bound_score) + 1, 1))
+    plt.grid(axis="x", linestyle="--", alpha=0.5)
     plt.title(
         f"Most target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
     )
@@ -112,10 +119,29 @@ if GRAPH_OF_SCORES:
     # Higher score at the top
     plt.gca().invert_yaxis()
     # "Normalize" scale
-    plt.xlim(0, max_limit)
+    plt.xlim(0, bound_score)
     plt.show()
 
-    # SECOND PLOT: Histogram
+    # SECOND PLOT: Worst
+    plt.figure(figsize=(16, 9))
+    plot = plt.barh(bottom_iem, bottom_score, color=bar_colors_bottom)
+
+    plt.xlabel("Score")
+    plt.xticks(range(0, int(bound_score) + 1, 1))
+    plt.grid(axis="x", linestyle="--", alpha=0.5)
+    plt.title(
+        f"Worst target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
+    )
+    plt.bar_label(plot, padding=5)
+    # Show the hole iem name
+    plt.tight_layout()
+    # Higher score at the top
+    plt.gca().invert_yaxis()
+    # "Normalize" scale
+    plt.xlim(0, bound_score)
+    plt.show()
+
+    # THIRD PLOT: Histogram
     plt.figure(figsize=(16, 9))
     plt.bar(
         np.arange(1, TOTAL_IEM_COUNT + 1),
@@ -127,35 +153,48 @@ if GRAPH_OF_SCORES:
     step = 25
     x_ticks = sorted(list(range(1, TOTAL_IEM_COUNT + 1, step)) + [TOTAL_IEM_COUNT])
     plt.xticks(x_ticks)
+    plt.yticks(range(0, int(max(deltas_score)) + 1, 1))
     plt.xlabel("IEMs")
     plt.ylabel("Score")
 
-    plt.title("Score histogram of the whole database")
-    plt.grid(axis="y", linestyle="--", alpha=0.3)
+    plt.title("Score histogram")
+    plt.grid(axis="y", linestyle="--", alpha=0.5)
     plt.tight_layout()
     plt.gca().invert_xaxis()
     plt.show()
 
-    # THIRD PLOT: Worst
+    # FOURTH PLOT: Distribution
     plt.figure(figsize=(16, 9))
-    plot = plt.barh(bottom_iem, bottom_score, color=bar_colors_bottom)
-
-    plt.xlabel("Score")
-    plt.title(
-        f"Worst target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
-    )
-    plt.bar_label(plot, padding=5)
-    # Show the hole iem name
+    vertical_bars = [
+        "0~0.9",
+        "1~1.9",
+        "2~2.9",
+        "3~3.9",
+        "4~4.9",
+        "5~5.9",
+        "6~6.9",
+        "7~7.9",
+        "8~8.9",
+        "9~10",
+    ]
+    distribution = [0] * len(vertical_bars)
+    for score in deltas_score:
+        pos = max(0, min(int(score), len(vertical_bars) - 1))
+        distribution[pos] += 1
+    plot = plt.bar(vertical_bars, distribution)
+    plt.title("Score distribution")
+    plt.ylabel("Count")
+    plt.yticks(range(0, max(distribution) + 1, 10))
+    plt.grid(axis="y", linestyle="--", alpha=0.5)
     plt.tight_layout()
-    # Higher score at the top
-    plt.gca().invert_yaxis()
-    # "Normalize" scale
-    plt.xlim(0, max_limit)
     plt.show()
 
 
-else:
-    print(f"Closest IEMs to {TARGET}: ")
+if __name__ == "__main__":
+    if not GRAPH_OF_SCORES:
+        print(f"Closest IEMs to {TARGET}: ")
 
-    for i in range(SHOW):
-        print(f"{i + 1}. {deltas_iem[i]} with {deltas_score[i]} points")
+        for i in range(SHOW):
+            print(f"{i + 1}. {deltas_iem[i]} with {deltas_score[i]} points")
+    else:
+        graphs()

@@ -17,7 +17,7 @@ In simple terms, hopefully, the goal of this project is to:
 2.  Find the IEM with **potentially** the closest sound to that ideal.
 
 Technical explanation:  
-Each IEM in the "neutral_fr" folder has been equalized as coherently as possible to my DFHRTF (Diffuse Field Head Related Transfer Function), so I can't hear any peaks and dips from a sinesweep, and sounds flat.  
+Each IEM in the "neutral_fr" folder has been equalized so every frequency is the same volume in a sinesweep, except in the bass as its harder to tell.  
 I made sure it follows more or less the preference bounds, so the tilt is coherent (-1dB/ocatve).
 
 It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in the diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
@@ -47,3 +47,4 @@ Data points have a logarithmic distribution, see the target txt file.
 ![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.png)
 ![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.png)
 ![Histogram of scores of the whole database](plots/histogram.png)
+![Distribution of scores of the whole database](plots/distribution.png)
