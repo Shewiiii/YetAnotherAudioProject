@@ -4,19 +4,17 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import common_freq, read_file
+from utils import KNOWN_BRANDS, common_freq, read_file
 
-GRAPH_OF_SCORES = True
+# Settings
 SHOW = 50
-
-# Find the closest frequency responses to the following target
+EXCLUDE_PROJECTS = True  # Excluse prototypes not on the market
+ONLY_KNOWN_BRANDS = False
 TARGET = "Shewi Target (DFHRTF).txt"
 FREQUENCY_RESPONSES = "frequency_responses/*.txt"
-NORMALIZATION_POINT = 223  # 223 is ~500hz, see generated target from average.py
-NORMALIZATION_SPL = 60  # in dB but probably does not matter
-EXCLUDE_PROJECTS = True  # Excluse prototypes not on the market
 
-# Coeffs
+
+# Coeffs and normalization parameters
 PINNA_WEIGHT_START = 367  # 272: ~1kHz, 367: ~4kHz
 PINNA_WEIGHT_END = 459  # 432: ~10kHz, 459: ~15kHz
 PINNA_COEFF = 4
@@ -24,6 +22,9 @@ PINNA_COEFF = 4
 BASS_WEIGHT_START = 0
 BASS_WEIGHT_END = 112  # 112: 100Hz
 BASS_COEFF = 0.3
+
+NORMALIZATION_POINT = 223  # 223 is ~500hz, see generated target from average.py
+NORMALIZATION_SPL = 60  # in dB but probably does not matter
 
 # Ignore FR above x Hz. 463: ~16kHz, should probably not be changed
 DATA_LIMIT = 463
@@ -63,7 +64,9 @@ weights_sliced = weights[:DATA_LIMIT]  # To match list size of target_spl_sliced
 
 deltas: dict[str, int] = {}
 for iem, spl in spl_dict.items():
-    if not EXCLUDE_PROJECTS or "project" not in iem.lower():
+    if (not EXCLUDE_PROJECTS or "project" not in iem.lower()) and (
+        not ONLY_KNOWN_BRANDS or any(brand in iem.lower() for brand in KNOWN_BRANDS)
+    ):
         deltas[iem] = int(
             np.sum(np.abs(target_spl_sliced - spl[:DATA_LIMIT]) * weights_sliced)
         )
@@ -89,7 +92,7 @@ def graphs() -> None:
         max(deltas_score) + 0.5
     )  # Padding so the score bars don't go out the graph
 
-    # Cool colors !
+    # Colors
     cmap = mcolors.LinearSegmentedColormap.from_list(
         "custom_gradient",
         [
@@ -99,7 +102,7 @@ def graphs() -> None:
             (1.0, "#86E485"),
         ],
     )
-    norm = mcolors.Normalize(vmin=min(deltas_score), vmax=max(deltas_score))
+    norm = mcolors.Normalize(vmin=0, vmax=8.25)
     bar_colors_top = [cmap(norm(score)) for score in top_score]
     bar_colors_bottom = [cmap(norm(score)) for score in bottom_score]
     all_colors = [cmap(norm(score)) for score in deltas_score]
@@ -192,10 +195,4 @@ def graphs() -> None:
 
 
 if __name__ == "__main__":
-    if not GRAPH_OF_SCORES:
-        print(f"Closest IEMs to {TARGET}: ")
-
-        for i in range(SHOW):
-            print(f"{i + 1}. {deltas_iem[i]} with {deltas_score[i]} points")
-    else:
-        graphs()
+    graphs()
