@@ -194,7 +194,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Target Adherence Leaderboard</title>
+    <title>Target Adherence Ranking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -507,13 +507,96 @@ HTML_TEMPLATE = """
             .score-bar-track { display: none; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
+
+        .ranking-metadata {
+            margin-top: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .ranking-metadata span {
+            color: var(--text-secondary);
+        }
+
+        .ranking-metadata .weight-item {
+            position: relative;
+            display: inline-block;
+            cursor: default;
+            text-decoration: none;
+            color: var(--text-muted);
+            transition: color 0.15s ease;
+        }
+
+        .ranking-metadata .weight-item:hover {
+            color: var(--accent);
+        }
+
+        .weight-popup {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 7px);
+            left: 50%;
+            transform: translateX(-50%) translateY(3px);
+            background-color: #161820;
+            color: #f5f5ff;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+            z-index: 100;
+        }
+
+        .weight-popup::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: #30363d transparent transparent transparent;
+        }
+
+        .weight-item:hover .weight-popup {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Target Adherence Leaderboard</h1>
+            <h1>Target Adherence Ranking</h1>
             <p class="subtitle">{{ target_name }}</p>
+            <p class="ranking-metadata">
+                <span>Rig:</span> B&amp;K 5128 &nbsp;|&nbsp;
+                <span>Norm:</span> {{ norm_freq }} &nbsp;|&nbsp;
+                <span>Decay Factor:</span> {{ decay_factor }} &nbsp;|&nbsp;
+                <span>Weights:</span> 
+                <span class="weight-item">
+                    Bass: {{ weights.bass.coeff }}
+                    <span class="weight-popup">{{ weights.bass.range }}</span>
+                </span> &bull; 
+                <span class="weight-item">
+                    Mid: {{ weights.mid.coeff }}
+                    <span class="weight-popup">{{ weights.mid.range }}</span>
+                </span> &bull; 
+                <span class="weight-item">
+                    Canal: {{ weights.canal.coeff }}
+                    <span class="weight-popup">{{ weights.canal.range }}</span>
+                </span> &bull; 
+                <span class="weight-item">
+                    Pinna: {{ weights.pinna.coeff }}
+                    <span class="weight-popup">{{ weights.pinna.range }}</span>
+                </span>
+            </p>
         </header>
 
         <div class="stats-grid">
@@ -822,7 +905,31 @@ HTML_TEMPLATE = """
 
 @app.route("/")
 def index():
-    return render_template_string(HTML_TEMPLATE, data=DATA_STORE, target_name=TARGET)
+    return render_template_string(
+        HTML_TEMPLATE,
+        data=DATA_STORE,
+        target_name=TARGET,
+        norm_freq=POINT_TO_FREQ.get(NORMALIZATION_POINT, "1kHz"),
+        decay_factor=DECAY_FACTOR,
+        weights={
+            "bass": {
+                "coeff": BASS_COEFF,
+                "range": f"{POINT_TO_FREQ.get(BASS_WEIGHT_START, '20Hz')} – {POINT_TO_FREQ.get(BASS_WEIGHT_END, '')}",
+            },
+            "mid": {
+                "coeff": MIDRANGE_COEFF,
+                "range": f"{POINT_TO_FREQ.get(MIDRANGE_WEIGHT_START, '')} – {POINT_TO_FREQ.get(MIDRANGE_WEIGHT_END, '')}",
+            },
+            "canal": {
+                "coeff": CANAL_COEFF,
+                "range": f"{POINT_TO_FREQ.get(CANAL_WEIGHT_START, '')} – {POINT_TO_FREQ.get(CANAL_WEIGHT_END, '')}",
+            },
+            "pinna": {
+                "coeff": PINNA_COEFF,
+                "range": f"{POINT_TO_FREQ.get(PINNA_WEIGHT_START, '')} – {POINT_TO_FREQ.get(PINNA_WEIGHT_END, '')}",
+            },
+        },
+    )
 
 
 @app.route("/api/graph/<int:iem_id>")

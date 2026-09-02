@@ -37,3 +37,15 @@ DATA_LIMIT = 481
 
 # Scale factor for exponential decay; lower = agressive drop, higher = flatter
 DECAY_FACTOR = 3600
+
+POINT_TO_FREQ = {
+    112: "100Hz",
+    177: "250Hz",
+    223: "500Hz",
+    272: "1kHz",
+    321: "2kHz",
+    367: "4kHz",
+    432: "10kHz",
+    459: "15kHz",
+    463: "16kHz",
+}
