@@ -2,11 +2,11 @@ SHOW = 50 # Matplotlib
 
 EXCLUDE_PROJECTS = True  # Exclude prototypes not on the market
 ONLY_KNOWN_BRANDS = False
-TARGET = "Shewi Target (DFHRTF).txt"
-JM1_TARGET = "JM-1 DF (Tilt_ -1dB_Oct) Target.txt"
+TARGET = "targets/Shewi Target (DFHRTF).txt"
+JM1_TARGET = "targets/JM-1 DF (Tilt_ -1dB_Oct) Target.txt"
 FREQUENCY_RESPONSES = "frequency_responses/*.txt"
-PREF_BOUNDS_TOP = "pref_bounds_top.txt"
-PREF_BOUNDS_BOTTOM = "pref_bounds_bottom.txt"
+PREF_BOUNDS_TOP = "targets/pref_bounds_top.txt"
+PREF_BOUNDS_BOTTOM = "targets/pref_bounds_bottom.txt"
 
 # Coeffs and normalization parameters
 BASS_WEIGHT_START = 0
