@@ -28,8 +28,9 @@ BASS_COEFF = 0.3
 # Ignore FR above x Hz. 463: ~16kHz, should probably not be changed
 DATA_LIMIT = 463
 
-# delta_score = COMP - [actual sum of deltas]; so the higher score means a better adherence
-COMPENSATION = 6000
+# Scale factor for exponential decay; lower = agressive drop, higher = flatter
+# Should be adjusted so the average is near 5
+DECAY_FACTOR = 3500
 
 files = sorted(Path().glob(FREQUENCY_RESPONSES))
 frequency_response_dict_unnormalized = {}
@@ -75,7 +76,7 @@ TOTAL_IEM_COUNT = len(deltas_iem)
 
 # Adjust delta_score so the highest score = best adherence
 for i in range(TOTAL_IEM_COUNT):
-    deltas_score[i] = round((COMPENSATION - deltas_score[i]) / 600, 2)
+    deltas_score[i] = round(10 * np.exp(-deltas_score[i] / DECAY_FACTOR), 2)
 
 
 # Results
