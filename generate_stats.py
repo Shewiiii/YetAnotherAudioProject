@@ -9,29 +9,41 @@ from utils import KNOWN_BRANDS, common_freq, read_file
 # Settings
 SHOW = 50
 EXCLUDE_PROJECTS = True  # Excluse prototypes not on the market
-ONLY_KNOWN_BRANDS = False
+ONLY_KNOWN_BRANDS = True
 TARGET = "Shewi Target (DFHRTF).txt"
 FREQUENCY_RESPONSES = "frequency_responses/*.txt"
 
 
 # Coeffs and normalization parameters
-PINNA_WEIGHT_START = 367  # 272: ~1kHz, 367: ~4kHz
-PINNA_WEIGHT_END = 459  # 432: ~10kHz, 459: ~15kHz
-PINNA_COEFF = 4
-
 BASS_WEIGHT_START = 0
 BASS_WEIGHT_END = 112  # 112: 100Hz
 BASS_COEFF = 0.3
 
+MIDRANGE_WEIGHT_START = 177 # 177: 250Hz
+MIDRANGE_WEIGHT_END = 321 # 321: ~2kHz
+MIDRANGE_COEFF = 1  # Many values
+
+CANAL_WEIGHT_START = 321 
+CANAL_WEIGHT_END = 367  # 367: ~4kHz
+CANAL_COEFF = 2 # Not many values
+
+PINNA_WEIGHT_START = 367  # 272: ~1kHz, 367: ~4kHz
+PINNA_WEIGHT_END = 459  # 432: ~10kHz, 459: ~15kHz
+PINNA_COEFF = 4
+
+
 NORMALIZATION_POINT = 223  # 223 is ~500hz, see generated target from average.py
 NORMALIZATION_SPL = 60  # in dB but probably does not matter
 
-# Ignore FR above x Hz. 463: ~16kHz, should probably not be changed
-DATA_LIMIT = 463
+# Ignore FR above x Hz. 463: ~16kHz, ~~should probably not be changed~~
+# I decided to remove the limit to punish very bright IEMs (eg. Daybreak): 
+# yes it is not accurate that high in frequency but still relevant on a large scale
+# There is not many values anyways
+DATA_LIMIT = 481
 
 # Scale factor for exponential decay; lower = agressive drop, higher = flatter
-# Should be adjusted so the average is near 5
-DECAY_FACTOR = 3500
+# Should be adjusted so the median is near 5
+DECAY_FACTOR = 3600
 
 files = sorted(Path().glob(FREQUENCY_RESPONSES))
 frequency_response_dict_unnormalized = {}
@@ -58,8 +70,10 @@ for iem, (freq, spl) in frequency_response_dict_unnormalized.items():
 # Score the delta vs. the target
 deltas: dict[str, int] = {}
 weights = np.ones_like(common_freq, dtype=float)
-weights[PINNA_WEIGHT_START:PINNA_WEIGHT_END] = PINNA_COEFF
 weights[BASS_WEIGHT_START:BASS_WEIGHT_END] = BASS_COEFF
+weights[MIDRANGE_WEIGHT_START:MIDRANGE_WEIGHT_END] = MIDRANGE_COEFF
+weights[CANAL_WEIGHT_START:CANAL_WEIGHT_END] = CANAL_COEFF
+weights[PINNA_WEIGHT_START:PINNA_WEIGHT_END] = PINNA_COEFF
 weights_sliced = weights[:DATA_LIMIT]  # To match list size of target_spl_sliced for np
 
 deltas: dict[str, int] = {}
@@ -81,6 +95,7 @@ TOTAL_IEM_COUNT = len(deltas_iem)
 for i in range(TOTAL_IEM_COUNT):
     deltas_score[i] = round(10 * np.exp(-deltas_score[i] / DECAY_FACTOR), 2)
 
+print(f"Median score: {np.median(deltas_score)}")
 
 # Results
 def graphs() -> None:
@@ -115,7 +130,7 @@ def graphs() -> None:
     plt.xticks(range(0, int(bound_score) + 1, 1))
     plt.grid(axis="x", linestyle="--", alpha=0.5)
     plt.title(
-        f"Most target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
+        f"Most target adherent IEMs (Top {SHOW}, weighted)"
     )
     plt.bar_label(plot, padding=5)
     # Show the hole iem name
@@ -134,7 +149,7 @@ def graphs() -> None:
     plt.xticks(range(0, int(bound_score) + 1, 1))
     plt.grid(axis="x", linestyle="--", alpha=0.5)
     plt.title(
-        f"Worst target adherent IEMs (Top {SHOW}, {PINNA_WEIGHT_START}~{PINNA_WEIGHT_END} coeff {PINNA_COEFF}, {BASS_WEIGHT_START}~{BASS_WEIGHT_END} coeff {BASS_COEFF})"
+        f"Worst target adherent IEMs (Top {SHOW}, weighted)"
     )
     plt.bar_label(plot, padding=5)
     # Show the hole iem name

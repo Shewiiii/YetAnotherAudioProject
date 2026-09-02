@@ -47,7 +47,7 @@ KNOWN_BRANDS = (
     "xiaomi",
     "oneplus",
     "oppo",
-    "lg",
+    "lg ",
     "motorola",
     "nothing",
     "jabra",
@@ -55,6 +55,4 @@ KNOWN_BRANDS = (
     "soundcore",
     "marshall",
     "skullcandy",
-    "etymotic",
-    "plantronics",
 )

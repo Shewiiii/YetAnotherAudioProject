@@ -38,8 +38,8 @@ The following target is their average:
 
 
 GRAPHS JUST FOR FUN, again target adherence does not tell the full story.  
-Truthear Pure with narrow bore tips, while being perfectible in the treble, does sound insanely good on my ears though. I currently do not have other IEMs to test in the top.
 
+! Coeffs are being reworked !
 Coeff set to reward pinna HRTF adherence and attenuate bass importance (way too much data points).  
 Data above 16kHz is ignored in the score calculation.  
 Data points have a logarithmic distribution, see the target txt file.
@@ -51,11 +51,8 @@ Data points have a logarithmic distribution, see the target txt file.
 
 ___
 
-Graphs with only known brands...  
+Graphs with only known brands...
 ![Known brands: Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/known_brands/top.png)
 ![Known brands: Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/known_brands/bottom.png)
 ![Known brands: Histogram of scores of the whole database](plots/known_brands/histogram.png)
 ![Known brands: Distribution of scores of the whole database](plots/known_brands/distribution.png)
-
-...and that reveal some issues: EtyKIDS 5 should not be above de Buds4 Pro  
-warota
