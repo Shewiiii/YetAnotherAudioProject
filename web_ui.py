@@ -548,26 +548,6 @@ HTML_TEMPLATE = """
             text-decoration-thickness: 1.5px;
         }
 
-        .param-popup {
-            visibility: hidden;
-            opacity: 0;
-            position: absolute;
-            top: calc(100% + 7px);
-            left: 50%;
-            transform: translateX(-50%) translateY(-3px);
-            background-color: #161820;
-            color: #f5f5ff;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 0.25rem 0.55rem;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
-            z-index: 100;
-        }
-
         .param-popup.norm-popup {
             width: min(320px, 80vw);
             white-space: normal;
@@ -598,22 +578,46 @@ HTML_TEMPLATE = """
             text-align: center;
         }
 
+        .param-popup {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: calc(100% + 7px);
+            left: 50%;
+            /* Apply horizontal offset through --shift-x */
+            transform: translateX(calc(-50% + var(--shift-x, 0px))) translateY(-3px);
+            background-color: #161820;
+            color: #f5f5ff;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.25rem 0.55rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+            z-index: 100;
+        }
+
+        .hoverable-param:hover .param-popup {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(calc(-50% + var(--shift-x, 0px))) translateY(0);
+        }
+
         .param-popup::after {
             content: "";
             position: absolute;
             bottom: 100%;
-            left: 50%;
+            /* Compensate arrow position so it stays aligned to the text */
+            left: calc(50% - var(--shift-x, 0px));
             transform: translateX(-50%);
             border-width: 4px;
             border-style: solid;
             border-color: transparent transparent #30363d transparent;
         }
 
-        .hoverable-param:hover .param-popup {
-            visibility: visible;
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+
     </style>
 </head>
 <body>
@@ -625,7 +629,7 @@ HTML_TEMPLATE = """
                 <span>Rig:</span>
                 <span class="hoverable-param">
                     B&amp;K 5128
-                    <span class="param-popup norm-popup">Industry standard measurement rig. Complies with ITU-T Rec. P.58 and has the most accurate acoustic input impedance, which is crutial for the measurement accuracy of high output impedance devices such as IEMs or true wireless earphones.</span>
+                    <span class="param-popup norm-popup">Industry standard measurement rig. Complies with ITU-T Rec. P.58 and has the most accurate acoustic input impedance, which is crutial in the measurement accuracy of high output impedance devices such as IEMs or true wireless earphones.</span>
                 </span> &nbsp;|&nbsp;
                 <span>Norm:</span>
                 <span class="hoverable-param">
@@ -1056,6 +1060,44 @@ HTML_TEMPLATE = """
             });
         });
         }
+
+        // So overkill lol
+        function updatePopupPosition(item) {
+            const popup = item.querySelector('.param-popup');
+            if (!popup) return;
+
+            const itemRect = item.getBoundingClientRect();
+            const triggerCenter = itemRect.left + itemRect.width / 2;
+            const popupWidth = popup.offsetWidth;
+
+            const naturalLeft = triggerCenter - popupWidth / 2;
+            const naturalRight = triggerCenter + popupWidth / 2;
+            const padding = 16;
+            const vw = window.innerWidth;
+
+            let shift = 0;
+            if (naturalLeft < padding) {
+                shift = padding - naturalLeft;
+            } else if (naturalRight > vw - padding) {
+                shift = (vw - padding) - naturalRight;
+            }
+
+            popup.style.setProperty('--shift-x', `${Math.round(shift)}px`);
+        }
+
+        function updateAllPopups() {
+            document.querySelectorAll('.hoverable-param').forEach(updatePopupPosition);
+        }
+
+        // Pre-calculate on load and resize so values are ready before hovering
+        window.addEventListener('resize', updateAllPopups);
+        window.addEventListener('DOMContentLoaded', updateAllPopups);
+        updateAllPopups();
+
+        // Ensure position is accurate on hover
+        document.querySelectorAll('.hoverable-param').forEach(item => {
+            item.addEventListener('mouseenter', () => updatePopupPosition(item));
+        });
     </script>
 </body>
 </html>
