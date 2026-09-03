@@ -218,6 +218,11 @@ HTML_TEMPLATE = """
             padding: 0;
         }
 
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: "Poppins", -apple-system, sans-serif;
             background-color: var(--bg-body);
@@ -227,6 +232,7 @@ HTML_TEMPLATE = """
         }
 
         .container {
+            width: 100%;
             max-width: 1100px;
             margin: 0 auto;
         }
@@ -244,6 +250,7 @@ HTML_TEMPLATE = """
         p.subtitle {
             color: var(--text-secondary);
             font-size: 0.95rem;
+            word-break: break-all;
         }
 
         .stats-grid {
@@ -278,10 +285,13 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 1rem;
             margin-bottom: 1rem;
+            min-width: 0;
         }
 
         .search-input {
             flex-grow: 1;
+            width: 100%;
+            min-width: 0;
             max-width: 400px;
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -308,7 +318,7 @@ HTML_TEMPLATE = """
         .mainstream-filter {
             color: var(--text-secondary);
             font-size: 0.9rem;
-            white-space: nowrap;
+            min-width: 0;
         }
 
         .mainstream-filter input[type="checkbox"] {
@@ -319,7 +329,8 @@ HTML_TEMPLATE = """
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -416,6 +427,7 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 0.5rem;
             transition: color 0.15s ease;
+            word-break: break-word;
         }
 
         .iem-link:hover {
@@ -445,12 +457,15 @@ HTML_TEMPLATE = """
             z-index: 1000;
             padding: 1rem;
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
-            transition: opacity 0.2s ease;
+            overflow-y: auto;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
 
         .modal-overlay.active {
             opacity: 1;
+            visibility: visible;
             pointer-events: auto;
         }
 
@@ -459,12 +474,14 @@ HTML_TEMPLATE = """
             border: 1px solid var(--border-color);
             border-radius: 12px;
             width: 100%;
-            max-width: 960px;
-            padding: 1.5rem;
+            max-width: 820px;
+            max-height: 90vh;
+            padding: 1.25rem;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
+            margin: auto;
         }
 
         .modal-header {
@@ -506,19 +523,38 @@ HTML_TEMPLATE = """
         .chart-container {
             position: relative;
             width: 100%;
-            height: 52vh;
-            min-height: 320px;
-            max-height: 520px;
+            height: 44vh;
+            min-height: 250px;
+            max-height: 440px;
         }
 
         @media (max-width: 768px) {
             body { padding: 1.25rem 0.75rem; }
-            .modal-card { padding: 1rem; width: 96vw; }
-            .chart-container { height: 40vh; min-height: 270px; }
+            .modal-card { 
+                padding: 0.85rem; 
+                width: 100%; 
+                max-height: 92vh; 
+            }
+            .chart-container { 
+                height: 35vh; 
+                min-height: 220px; 
+            }
+            .toolbar {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0.6rem;
+            }
+            .search-input { max-width: none; }
+            .count-tag { text-align: left; max-width: none; }
             .col-delta { display: none; }
-            .col-score { width: 140px; }
+            .col-rank { width: 38px; }
+            .col-score { width: 72px; }
+            th, td { padding: 0.65rem 0.5rem; }
             .score-bar-track { display: none; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 0.6rem; 
+            }
+            .stat-card { padding: 0.9rem; }
         }
 
         .ranking-metadata {
@@ -905,6 +941,9 @@ HTML_TEMPLATE = """
             const res = await fetch(`/api/graph/${id}`);
             const iem = await res.json();
 
+            // Detect mobile width
+            const isMobile = window.innerWidth < 768;
+
             document.getElementById('modalTitle').textContent = iem.name;
             document.getElementById('graphModal').classList.add('active');
 
@@ -936,7 +975,7 @@ HTML_TEMPLATE = """
                                 label: iem.name,
                                 data: pointsIEM,
                                 borderColor: "#684EEB",
-                                borderWidth: 2.5,
+                                borderWidth: isMobile ? 1.8 : 2.5,
                                 fill: 2,
                                 backgroundColor: gradient,
                                 order: 1
@@ -945,7 +984,7 @@ HTML_TEMPLATE = """
                                 label: "Shewi Target (DFHRTF)",
                                 data: pointsShewi,
                                 borderColor: "#877CC1",
-                                borderWidth: 2,
+                                borderWidth: isMobile ? 1.5 : 2,
                                 borderDash: [5, 5],
                                 fill: false,
                                 order: 2
@@ -954,7 +993,7 @@ HTML_TEMPLATE = """
                                 label: "JM-1 DF (Tilt -1dB/Oct)",
                                 data: pointsJM1,
                                 borderColor: "#3a404d",
-                                borderWidth: 1.5,
+                                borderWidth: 1,
                                 fill: false,
                                 order: 3
                             },
@@ -962,7 +1001,7 @@ HTML_TEMPLATE = """
                                 label: "Preference Bounds (Top)",
                                 data: pointsPrefTop,
                                 borderColor: "#282e39",
-                                borderWidth: 1.5,
+                                borderWidth: 1,
                                 fill: false,
                                 order: 4
                             },
@@ -970,7 +1009,7 @@ HTML_TEMPLATE = """
                                 label: "Preference Bounds (Bottom)",
                                 data: pointsPrefBottom,
                                 borderColor: "#282e39",
-                                borderWidth: 1.5,
+                                borderWidth: 1,
                                 fill: false,
                                 order: 4
                             }
@@ -994,78 +1033,88 @@ HTML_TEMPLATE = """
                         elements: {
                             point: { radius: 0 }
                         },
+                        layout: {
+                            padding: isMobile ? { left: -4, right: 4, top: 0, bottom: 0 } : 0
+                        },
                         scales: {
                             x: {
                                 type: 'logarithmic',
                                 min: 20,
                                 max: 20000,
                                 grid: {
-                                color: '#1f242d',
-                                borderColor: '#30363d'
-                            },
-                            ticks: {
-                                color: '#f5f5ff',
-                                font: { family: 'Poppins', size: 11 },
-                                callback: function(val) {
-                                    const ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-                                    if (ticks.includes(val)) {
-                                        return val >= 1000 ? (val / 1000) + 'k' : val;
+                                    color: '#1f242d',
+                                    borderColor: '#30363d'
+                                },
+                                ticks: {
+                                    color: '#f5f5ff',
+                                    font: { family: 'Poppins', size: isMobile ? 8 : 11 },
+                                    padding: isMobile ? 2 : 6,
+                                    callback: function(val) {
+                                        const ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+                                        if (ticks.includes(val)) {
+                                            return val >= 1000 ? (val / 1000) + 'k' : val;
+                                        }
+                                        return null;
                                     }
-                                    return null;
+                                },
+                                title: {
+                                    // Hidden on mobile to reclaim vertical height
+                                    display: !isMobile,
+                                    text: 'Frequency (Hz)',
+                                    color: '#f5f5ff',
+                                    font: { family: 'Poppins', size: 11 }
                                 }
                             },
-                            title: {
-                                display: true,
-                                text: 'Frequency (Hz)',
-                                color: '#f5f5ff',
-                                font: { family: 'Poppins', size: 11 }
+                            y: {
+                                min: -20,
+                                max: 20,
+                                grid: {
+                                    color: '#1a1f26',
+                                    borderColor: '#30363d'
+                                },
+                                ticks: {
+                                    stepSize: 5,
+                                    color: '#f5f5ff',
+                                    font: { family: 'Poppins', size: isMobile ? 8 : 11 },
+                                    padding: isMobile ? 2 : 6,
+                                    callback: (val) => `${val} dB`
+                                },
+                                title: {
+                                    // Hidden on mobile to reclaim horizontal left margin
+                                    display: !isMobile,
+                                    text: 'dB',
+                                    color: '#f5f5ff',
+                                    font: { family: 'Poppins', size: 11 }
+                                }
                             }
                         },
-                        y: {
-                            min: -20,
-                            max: 20,
-                            grid: {
-                                color: '#1a1f26',
-                                borderColor: '#30363d'
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    filter: (item) => !item.text.includes('Preference Bounds'),
+                                    color: '#FFFFFF',
+                                    font: { family: 'Poppins', size: isMobile ? 9 : 12 },
+                                    boxWidth: isMobile ? 12 : 24,
+                                    padding: isMobile ? 6 : 10
+                                }
                             },
-                            ticks: {
-                                stepSize: 5,
-                                color: '#f5f5ff',
-                                font: { family: 'Poppins', size: 11 },
-                                callback: (val) => `${val} dB`
-                            },
-                            title: {
-                                display: true,
-                                text: 'dB',
-                                color: '#f5f5ff',
-                                font: { family: 'Poppins', size: 11 }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                filter: (item) => !item.text.includes('Preference Bounds'),
-                                color: '#FFFFFF',
-                                font: { family: 'Poppins', size: 12 },
-                                boxWidth: 24
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(16, 19, 25, 0.95)',
-                            titleColor: '#f5f5ff',
-                            bodyColor: '#f5f5ff',
-                            borderColor: '#30363d',
-                            borderWidth: 1,
-                            callbacks: {
-                                title: (items) => `${Math.round(items[0].parsed.x)} Hz`,
-                                label: (item) => ` ${item.dataset.label}:${item.parsed.y.toFixed(2)} dB`
+                            tooltip: {
+                                backgroundColor: 'rgba(16, 19, 25, 0.95)',
+                                titleColor: '#f5f5ff',
+                                bodyColor: '#f5f5ff',
+                                borderColor: '#30363d',
+                                borderWidth: 1,
+                                titleFont: { family: 'Poppins', size: isMobile ? 10 : 12 },
+                                bodyFont: { family: 'Poppins', size: isMobile ? 9 : 12 },
+                                callbacks: {
+                                    title: (items) => `${Math.round(items[0].parsed.x)} Hz`,
+                                    label: (item) => ` ${item.dataset.label}:${item.parsed.y.toFixed(2)} dB`
+                                }
                             }
                         }
                     }
-                }
+                });
             });
-        });
         }
 
         // So overkill lol
