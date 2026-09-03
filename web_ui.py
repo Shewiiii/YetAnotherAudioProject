@@ -556,7 +556,7 @@ HTML_TEMPLATE = """
         }
 
         .param-popup.decay-popup {
-            width: min(360px, 80vw);
+            width: 320px;
             white-space: normal;
             line-height: 1.4;
             text-align: left;
@@ -564,9 +564,16 @@ HTML_TEMPLATE = """
 
         .decay-chart-container {
             position: relative;
+            display: block;
+            width: 100%;
             height: 150px;
             margin-top: 0.5rem;
             padding-top: 0.5rem;
+        }
+
+        .decay-chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .decay-formula {
