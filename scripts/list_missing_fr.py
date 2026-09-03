@@ -45,7 +45,9 @@ MEASUREMENT_SUFFIX_TOKENS = {
     "windows",
     "listener",
     "tam",
-    "mm"
+    "mm",
+    "hangout",
+    "earphones archive"
 }
 
 # Add project root to sys.path so params can be imported
