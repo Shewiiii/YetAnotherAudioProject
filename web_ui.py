@@ -374,6 +374,18 @@ HTML_TEMPLATE = """
             font-size: 0.9rem;
         }
 
+        .score-header-hoverable {
+            position: relative;
+            display: inline-block;
+            color: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            cursor: default;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
+        }
+
         .col-delta {
             width: 110px;
             text-align: right;
@@ -642,7 +654,8 @@ HTML_TEMPLATE = """
             z-index: 100;
         }
 
-        .hoverable-param:hover .param-popup {
+        .hoverable-param:hover .param-popup,
+        .score-header-hoverable:hover .param-popup {
             visibility: visible;
             opacity: 1;
             transform: translateX(calc(-50% + var(--shift-x, 0px))) translateY(0);
@@ -756,7 +769,12 @@ HTML_TEMPLATE = """
                     <tr>
                         <th class="col-rank">#</th>
                         <th>Model</th>
-                        <th class="col-score">Score</th>
+                        <th class="col-score">
+                            <span class="score-header-hoverable">
+                                Score
+                                <span class="param-popup norm-popup">Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load)</span>
+                            </span>
+                        </th>
                         <th class="col-delta">W Error</th>
                     </tr>
                 </thead>
@@ -1142,7 +1160,7 @@ HTML_TEMPLATE = """
         }
 
         function updateAllPopups() {
-            document.querySelectorAll('.hoverable-param').forEach(updatePopupPosition);
+            document.querySelectorAll('.hoverable-param, .score-header-hoverable').forEach(updatePopupPosition);
         }
 
         // Pre-calculate on load and resize so values are ready before hovering
@@ -1151,7 +1169,7 @@ HTML_TEMPLATE = """
         updateAllPopups();
 
         // Ensure position is accurate on hover
-        document.querySelectorAll('.hoverable-param').forEach(item => {
+        document.querySelectorAll('.hoverable-param, .score-header-hoverable').forEach(item => {
             item.addEventListener('mouseenter', () => updatePopupPosition(item));
         });
     </script>
