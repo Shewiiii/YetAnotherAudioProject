@@ -149,8 +149,8 @@ def init_data() -> dict:
     scores = []
     curves_indexed = {}
 
-    for idx, (iem, raw_delta) in enumerate(sorted_deltas.items()):
-        score = round(10 * np.exp(-raw_delta / DECAY_FACTOR), 2)
+    for idx, (iem, weighted_delta) in enumerate(sorted_deltas.items()):
+        score = round(10 * np.exp(-weighted_delta / DECAY_FACTOR), 2)
         scores.append(score)
         color_hex = mcolors.to_hex(cmap(norm(score)))
 
@@ -160,7 +160,7 @@ def init_data() -> dict:
                 "rank": idx + 1,
                 "name": iem,
                 "score": score,
-                "raw_delta": raw_delta,
+                "weighted_delta": weighted_delta,
                 "color": color_hex,
                 "bar_width": min(max(score * 10, 0), 100),
                 "mainstream": any(brand.lower() in iem.lower() for brand in KNOWN_BRANDS),
@@ -301,7 +301,8 @@ HTML_TEMPLATE = """
             color: var(--text-secondary);
             font-size: 0.9rem;
             text-align: right;
-            white-space: nowrap;
+            max-width: min(30rem, calc(100vw - 2rem));
+            white-space: normal;
         }
 
         .mainstream-filter {
@@ -531,26 +532,29 @@ HTML_TEMPLATE = """
             color: var(--text-secondary);
         }
 
-        .ranking-metadata .weight-item {
+        .ranking-metadata .hoverable-param {
             position: relative;
             display: inline-block;
             cursor: default;
-            text-decoration: none;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
             color: var(--text-muted);
             transition: color 0.15s ease;
         }
 
-        .ranking-metadata .weight-item:hover {
+        .ranking-metadata .hoverable-param:hover {
             color: var(--accent);
+            text-decoration-thickness: 1.5px;
         }
 
-        .weight-popup {
+        .param-popup {
             visibility: hidden;
             opacity: 0;
             position: absolute;
-            bottom: calc(100% + 7px);
+            top: calc(100% + 7px);
             left: 50%;
-            transform: translateX(-50%) translateY(3px);
+            transform: translateX(-50%) translateY(-3px);
             background-color: #161820;
             color: #f5f5ff;
             border: 1px solid #30363d;
@@ -564,18 +568,48 @@ HTML_TEMPLATE = """
             z-index: 100;
         }
 
-        .weight-popup::after {
+        .param-popup.norm-popup {
+            width: min(320px, 80vw);
+            white-space: normal;
+            line-height: 1.35;
+            text-align: left;
+        }
+
+        .param-popup.decay-popup {
+            width: min(360px, 80vw);
+            white-space: normal;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .decay-chart-container {
+            position: relative;
+            height: 150px;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .decay-formula {
+            display: block;
+            margin: 0.35rem 0;
+            color: #ffffff;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .param-popup::after {
             content: "";
             position: absolute;
-            top: 100%;
+            bottom: 100%;
             left: 50%;
             transform: translateX(-50%);
             border-width: 4px;
             border-style: solid;
-            border-color: #30363d transparent transparent transparent;
+            border-color: transparent transparent #30363d transparent;
         }
 
-        .weight-item:hover .weight-popup {
+        .hoverable-param:hover .param-popup {
             visibility: visible;
             opacity: 1;
             transform: translateX(-50%) translateY(0);
@@ -588,29 +622,48 @@ HTML_TEMPLATE = """
             <h1>Target Adherence Ranking</h1>
             <p class="subtitle">{{ target_name }}</p>
             <p class="ranking-metadata">
-                <span>Rig:</span> B&amp;K 5128 &nbsp;|&nbsp;
-                <span>Norm:</span> {{ norm_freq }} &nbsp;|&nbsp;
-                <span>Decay Factor:</span> {{ decay_factor }} &nbsp;|&nbsp;
+                <span>Rig:</span>
+                <span class="hoverable-param">
+                    B&amp;K 5128
+                    <span class="param-popup norm-popup">Industry standard measurement rig. Complies with ITU-T Rec. P.58 and has the most accurate acoustic input impedance, which is crutial for the measurement accuracy of high output impedance devices such as IEMs or true wireless earphones.</span>
+                </span> &nbsp;|&nbsp;
+                <span>Norm:</span>
+                <span class="hoverable-param">
+                    {{ norm_freq }}
+                    <span class="param-popup norm-popup">A fixed normalization is not ideal, as a peak/dip at the normalization frequency could considerably lower the score. However, a choice must be made and good IEMs should not behave that way anyways.</span>
+                </span> &nbsp;|&nbsp;
+                <span>Decay Factor:</span>
+                <span class="hoverable-param" onmouseenter="drawDecayChart()">
+                    {{ decay_factor }}
+                    <span class="param-popup decay-popup">
+                        Controls how quickly the score decreases as the weighted error (Δ) increases.
+                        <span class="decay-formula">Score = 10 × e<sup>−Δ / D</sup></span>
+                        A larger <i>D</i> makes the score fall less aggressively.
+                        <span class="decay-chart-container">
+                            <canvas id="decayChart"></canvas>
+                        </span>
+                    </span>
+                </span> &nbsp;|&nbsp;
                 <span>Weights:</span>
-                <span class="weight-item">
+                <span class="hoverable-param">
                     Sub: {{ weights.sub.coeff }}
-                    <span class="weight-popup">{{ weights.sub.range }} | {{ weights.sub.value_count }} values</span>
+                    <span class="param-popup">{{ weights.sub.range }} | {{ weights.sub.value_count }} values</span>
                 </span> &bull; 
-                <span class="weight-item">
+                <span class="hoverable-param">
                     Bass: {{ weights.bass.coeff }}
-                    <span class="weight-popup">{{ weights.bass.range }} | {{ weights.bass.value_count }} values</span>
+                    <span class="param-popup">{{ weights.bass.range }} | {{ weights.bass.value_count }} values</span>
                 </span> &bull; 
-                <span class="weight-item">
+                <span class="hoverable-param">
                     Mids: {{ weights.mids.coeff }}
-                    <span class="weight-popup">{{ weights.mids.range }} | {{ weights.mids.value_count }} values</span>
+                    <span class="param-popup">{{ weights.mids.range }} | {{ weights.mids.value_count }} values</span>
                 </span> &bull; 
-                <span class="weight-item">
+                <span class="hoverable-param">
                     Canal: {{ weights.canal.coeff }}
-                    <span class="weight-popup">{{ weights.canal.range }} | {{ weights.canal.value_count }} values</span>
+                    <span class="param-popup">{{ weights.canal.range }} | {{ weights.canal.value_count }} values</span>
                 </span> &bull; 
-                <span class="weight-item">
+                <span class="hoverable-param">
                     Pinna: {{ weights.pinna.coeff }}
-                    <span class="weight-popup">{{ weights.pinna.range }} | {{ weights.pinna.value_count }} values</span>
+                    <span class="param-popup">{{ weights.pinna.range }} | {{ weights.pinna.value_count }} values</span>
                 </span>
             </p>
         </header>
@@ -656,8 +709,8 @@ HTML_TEMPLATE = """
                     <tr>
                         <th class="col-rank">#</th>
                         <th>Model</th>
-                        <th class="col-score">Score (/10)</th>
-                        <th class="col-delta">Raw Delta</th>
+                        <th class="col-score">Score</th>
+                        <th class="col-delta">W Error</th>
                     </tr>
                 </thead>
                 <tbody id="iem-table-body">
@@ -683,7 +736,7 @@ HTML_TEMPLATE = """
                                 </div>
                             </div>
                         </td>
-                        <td class="col-delta">{{ item.raw_delta }}</td>
+                        <td class="col-delta">{{ item.weighted_delta }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -713,7 +766,79 @@ HTML_TEMPLATE = """
         const jm1Comp = {{ data['jm1_comp'] | tojson }};
         const prefTop = {{ data['pref_top'] | tojson }};
         const prefBottom = {{ data['pref_bottom'] | tojson }};
+        const decayFactor = {{ decay_factor | tojson }};
         let chartInstance = null;
+        let decayChartInstance = null;
+
+        function drawDecayChart() {
+            if (decayChartInstance) return;
+            const canvas = document.getElementById('decayChart');
+            if (!canvas) return;
+
+            const deltas = [500, 650, 850, 1100, 1450, 1900, 2500, 3300, 4300, 5600, 7300, 10000];
+            const points = deltas.map(delta => ({
+                x: delta,
+                y: 10 * Math.exp(-delta / decayFactor)
+            }));
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+            gradient.addColorStop(0, 'rgba(104, 78, 235, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            decayChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [{
+                    label: 'Score',
+                    data: points,
+                    borderColor: '#684EEB',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.25
+                }] },
+                options: {
+                    animation: { duration: 500 },
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    font: { family: 'Poppins' },
+                    scales: {
+                        x: {
+                            type: 'logarithmic', min: 500, max: 10000,
+                            grid: { color: '#1f242d', borderColor: '#30363d' },
+                            ticks: {
+                                color: '#9aa1b3',
+                                font: { family: 'Poppins' },
+                                autoSkip: false,
+                                callback: value => {
+                                    const tickValues = [500, 1000, 2000, 5000, 10000];
+                                    if (!tickValues.includes(Number(value))) return null;
+                                    return value >= 1000 ? `${value / 1000}k` : '500';
+                                }
+                            },
+                            title: { display: true, text: 'Δ', color: '#9aa1b3', font: { family: 'Poppins' } }
+                        },
+                        y: {
+                            min: 0, max: 10,
+                            grid: { color: '#1a1f26', borderColor: '#30363d' },
+                            ticks: { color: '#9aa1b3', stepSize: 2, font: { family: 'Poppins' } },
+                            title: { display: true, text: 'Score', color: '#9aa1b3', font: { family: 'Poppins' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            titleFont: { family: 'Poppins' },
+                            bodyFont: { family: 'Poppins' },
+                            callbacks: {
+                                title: items => `Δ = ${Math.round(items[0].parsed.x)}`,
+                                label: item => ` Score: ${item.parsed.y.toFixed(2)}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         function filterIEMs() {
             const query = document.getElementById('search').value.toLowerCase().trim();
