@@ -17,7 +17,7 @@ if (
     BASE_DIR = BASE_DIR.parent
 
 sys.path.append(str(BASE_DIR))
-from utils import KNOWN_BRANDS, common_freq, read_file
+from utils import common_freq, read_file
 
 app = Flask(__name__)
 
@@ -108,6 +108,7 @@ def init_data() -> dict:
 
     # 5. Score calculation
     weights = np.ones_like(common_freq, dtype=float)
+    weights[SUB_WEIGHT_START:SUB_WEIGHT_END] = SUB_COEFF
     weights[BASS_WEIGHT_START:BASS_WEIGHT_END] = BASS_COEFF
     weights[MIDRANGE_WEIGHT_START:MIDRANGE_WEIGHT_END] = MIDRANGE_COEFF
     weights[CANAL_WEIGHT_START:CANAL_WEIGHT_END] = CANAL_COEFF
@@ -118,9 +119,7 @@ def init_data() -> dict:
     iem_curves_by_id = {}
 
     for iem, (freq, spl) in frequency_response_dict.items():
-        if (not EXCLUDE_PROJECTS or "project" not in iem.lower()) and (
-            not ONLY_KNOWN_BRANDS or any(brand in iem.lower() for brand in KNOWN_BRANDS)
-        ):
+        if not EXCLUDE_PROJECTS or "project" not in iem.lower():
             spl_interp = normalize(
                 np.interp(np.log10(common_freq), np.log10(freq), spl)
             )
@@ -164,6 +163,7 @@ def init_data() -> dict:
                 "raw_delta": raw_delta,
                 "color": color_hex,
                 "bar_width": min(max(score * 10, 0), 100),
+                "mainstream": any(brand.lower() in iem.lower() for brand in KNOWN_BRANDS),
             }
         )
         curves_indexed[idx] = {
@@ -273,8 +273,8 @@ HTML_TEMPLATE = """
         }
 
         .toolbar {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto 9rem;
             align-items: center;
             gap: 1rem;
             margin-bottom: 1rem;
@@ -300,6 +300,18 @@ HTML_TEMPLATE = """
         .count-tag {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .mainstream-filter {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .mainstream-filter input[type="checkbox"] {
+            accent-color: var(--accent-subtle);
         }
 
         .table-container {
@@ -579,7 +591,11 @@ HTML_TEMPLATE = """
                 <span>Rig:</span> B&amp;K 5128 &nbsp;|&nbsp;
                 <span>Norm:</span> {{ norm_freq }} &nbsp;|&nbsp;
                 <span>Decay Factor:</span> {{ decay_factor }} &nbsp;|&nbsp;
-                <span>Weights:</span> 
+                <span>Weights:</span>
+                <span class="weight-item">
+                    Sub: {{ weights.sub.coeff }}
+                    <span class="weight-popup">{{ weights.sub.range }} | {{ weights.sub.value_count }} values</span>
+                </span> &bull; 
                 <span class="weight-item">
                     Bass: {{ weights.bass.coeff }}
                     <span class="weight-popup">{{ weights.bass.range }} | {{ weights.bass.value_count }} values</span>
@@ -627,6 +643,10 @@ HTML_TEMPLATE = """
                 oninput="filterIEMs()"
                 autocomplete="off"
             >
+            <label class="mainstream-filter">
+                <input type="checkbox" id="mainstream-only" {% if ONLY_KNOWN_BRANDS %}checked{% endif %} onchange="filterIEMs()">
+                Only include mainstream brands
+            </label>
             <span class="count-tag" id="visible-count">Showing {{ data['total_count'] }} items</span>
         </div>
 
@@ -642,7 +662,7 @@ HTML_TEMPLATE = """
                 </thead>
                 <tbody id="iem-table-body">
                     {% for item in data['items'] %}
-                    <tr class="iem-row" data-name="{{ item.name.lower() }}">
+                    <tr class="iem-row" data-name="{{ item.name.lower() }}" data-mainstream="{{ item.mainstream|lower }}">
                         <td class="col-rank">{{ item.rank }}</td>
                         <td class="col-name">
                             <button class="iem-link" onclick="openGraphModal({{ item.id }})">
@@ -697,20 +717,34 @@ HTML_TEMPLATE = """
 
         function filterIEMs() {
             const query = document.getElementById('search').value.toLowerCase().trim();
+            const mainstreamOnly = document.getElementById('mainstream-only').checked;
             const rows = document.querySelectorAll('.iem-row');
             let visibleCount = 0;
+            const visibleScores = [];
 
             rows.forEach(row => {
                 const name = row.getAttribute('data-name');
-                if (name.includes(query)) {
+                if (name.includes(query) && (!mainstreamOnly || row.dataset.mainstream === 'true')) {
                     row.style.display = '';
                     visibleCount++;
+                    visibleScores.push(parseFloat(row.querySelector('.score-pill').textContent));
                 } else {
                     row.style.display = 'none';
                 }
             });
 
             document.getElementById('visible-count').textContent = `Showing ${visibleCount} items`;
+            const sortedScores = visibleScores.sort((a, b) => a - b);
+            const median = sortedScores.length
+                ? (sortedScores.length % 2
+                    ? sortedScores[(sortedScores.length - 1) / 2]
+                    : (sortedScores[sortedScores.length / 2 - 1] + sortedScores[sortedScores.length / 2]) / 2)
+                : 0;
+            const stats = document.querySelectorAll('.stat-card strong');
+            stats[0].textContent = visibleCount;
+            stats[1].textContent = median.toFixed(2);
+            stats[2].textContent = visibleScores.length ? Math.max(...visibleScores).toFixed(2) : '0.00';
+            stats[3].textContent = visibleScores.length ? Math.min(...visibleScores).toFixed(2) : '0.00';
         }
 
         function handleBackdropClick(event) {
@@ -912,25 +946,30 @@ def index():
         norm_freq=POINT_TO_FREQ.get(NORMALIZATION_POINT, "1kHz"),
         decay_factor=DECAY_FACTOR,
         weights={
+            "sub": {
+                "coeff": SUB_COEFF,
+                "range": f"{POINT_TO_FREQ.get(SUB_WEIGHT_START, '20Hz')} - {POINT_TO_FREQ.get(SUB_WEIGHT_END, '')}",
+                "value_count": SUB_WEIGHT_END - SUB_WEIGHT_START,
+            },
             "bass": {
                 "coeff": BASS_COEFF,
-                "range": f"{POINT_TO_FREQ.get(BASS_WEIGHT_START, '20Hz')} - {POINT_TO_FREQ.get(BASS_WEIGHT_END, '')}",
-                "value_count" : BASS_WEIGHT_END - BASS_WEIGHT_START
+                "range": f"{POINT_TO_FREQ.get(BASS_WEIGHT_START, '')} - {POINT_TO_FREQ.get(BASS_WEIGHT_END, '')}",
+                "value_count": BASS_WEIGHT_END - BASS_WEIGHT_START,
             },
             "mids": {
                 "coeff": MIDRANGE_COEFF,
                 "range": f"{POINT_TO_FREQ.get(MIDRANGE_WEIGHT_START, '')} - {POINT_TO_FREQ.get(MIDRANGE_WEIGHT_END, '')}",
-                "value_count" : MIDRANGE_WEIGHT_END - MIDRANGE_WEIGHT_START
+                "value_count": MIDRANGE_WEIGHT_END - MIDRANGE_WEIGHT_START,
             },
             "canal": {
                 "coeff": CANAL_COEFF,
                 "range": f"{POINT_TO_FREQ.get(CANAL_WEIGHT_START, '')} - {POINT_TO_FREQ.get(CANAL_WEIGHT_END, '')}",
-                "value_count" : CANAL_WEIGHT_END - CANAL_WEIGHT_START
+                "value_count": CANAL_WEIGHT_END - CANAL_WEIGHT_START,
             },
             "pinna": {
                 "coeff": PINNA_COEFF,
                 "range": f"{POINT_TO_FREQ.get(PINNA_WEIGHT_START, '')} - {POINT_TO_FREQ.get(PINNA_WEIGHT_END, '')}",
-                "value_count" : PINNA_WEIGHT_END - PINNA_WEIGHT_START
+                "value_count": PINNA_WEIGHT_END - PINNA_WEIGHT_START,
             },
         },
     )

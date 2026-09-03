@@ -36,23 +36,6 @@ The following target is their average:
 ![Shewi Target, DFHRTF compliant](graph.png)
 (Happy to see that my old stupid target ("Shewi Target") had almost the correct shape at 10k !)
 
-GRAPHS JUST FOR FUN, again target adherence does not tell the full story.
+RANKING JUST FOR FUN, again target adherence does not tell the full story.
 
-! Coeffs are being reworked !
-Coeff set to reward pinna HRTF adherence and attenuate bass importance (way too much data points).  
-Data above 16kHz is ignored in the score calculation.  
-Data points have a logarithmic distribution, see the target txt file.
-
-![Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/top.png)
-![Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/bottom.png)
-![Histogram of scores of the whole database](plots/histogram.png)
-![Distribution of scores of the whole database](plots/distribution.png)
-
----
-
-Graphs with only known brands...
-
-![Known brands: Most target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/known_brands/top.png)
-![Known brands: Worst target adherent IEMs (Top 50, coeff 3 between 1 to 17kHz)](plots/known_brands/bottom.png)
-![Known brands: Histogram of scores of the whole database](plots/known_brands/histogram.png)
-![Known brands: Distribution of scores of the whole database](plots/known_brands/distribution.png)
+You can see the results here: https://iems.shewi.app/, or compile the project and run `web_ui.py`.
