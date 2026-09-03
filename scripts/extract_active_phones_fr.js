@@ -41,19 +41,37 @@
         return y1 + (y2 - y1) * ((f - f1) / (f2 - f1));
     };
 
-    activePhones.forEach((p) => {
-        if (!INCLUDE_TARGETS && p.isTarget) return;
+    const isPoint = (value) =>
+        Array.isArray(value) && value.length >= 2 &&
+        typeof value[0] === "number" && typeof value[1] === "number";
 
-        const curves = p.rawChannels || p.channels;
-        if (!curves || curves.length < 2) return;
+    const averageChannels = (curves) => {
+        if (!Array.isArray(curves) || curves.length === 0) return null;
+
+        // A single available channel can still be wrapped in an array.
+        if (curves.length === 1 && Array.isArray(curves[0]) && isPoint(curves[0][0])) {
+            return curves[0];
+        }
+
+        // Some pages expose channels as one already-averaged [frequency, dB] curve.
+        if (isPoint(curves[0])) return curves;
+        if (curves.length < 2 || !Array.isArray(curves[0]) || !Array.isArray(curves[1])) {
+            return null;
+        }
 
         const left = curves[0];
         const right = curves[1];
-
-        const avg = left.map(([f, yL]) => {
+        return left.map(([f, yL]) => {
             const yR = interp(right, f);
             return [f, (yL + yR) / 2];
         });
+    };
+
+    activePhones.forEach((p) => {
+        if (!INCLUDE_TARGETS && p.isTarget) return;
+
+        const avg = averageChannels(p.rawChannels || p.channels);
+        if (!avg) return;
 
         const brand = p.dispBrand || p.brand?.name || "";
         const model = p.dispName || p.phone || p.fullName || p.fileName;
