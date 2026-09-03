@@ -582,19 +582,19 @@ HTML_TEMPLATE = """
                 <span>Weights:</span> 
                 <span class="weight-item">
                     Bass: {{ weights.bass.coeff }}
-                    <span class="weight-popup">{{ weights.bass.range }}</span>
+                    <span class="weight-popup">{{ weights.bass.range }} | {{ weights.bass.value_count }} values</span>
                 </span> &bull; 
                 <span class="weight-item">
-                    Mid: {{ weights.mid.coeff }}
-                    <span class="weight-popup">{{ weights.mid.range }}</span>
+                    Mids: {{ weights.mids.coeff }}
+                    <span class="weight-popup">{{ weights.mids.range }} | {{ weights.mids.value_count }} values</span>
                 </span> &bull; 
                 <span class="weight-item">
                     Canal: {{ weights.canal.coeff }}
-                    <span class="weight-popup">{{ weights.canal.range }}</span>
+                    <span class="weight-popup">{{ weights.canal.range }} | {{ weights.canal.value_count }} values</span>
                 </span> &bull; 
                 <span class="weight-item">
                     Pinna: {{ weights.pinna.coeff }}
-                    <span class="weight-popup">{{ weights.pinna.range }}</span>
+                    <span class="weight-popup">{{ weights.pinna.range }} | {{ weights.pinna.value_count }} values</span>
                 </span>
             </p>
         </header>
@@ -914,19 +914,23 @@ def index():
         weights={
             "bass": {
                 "coeff": BASS_COEFF,
-                "range": f"{POINT_TO_FREQ.get(BASS_WEIGHT_START, '20Hz')} – {POINT_TO_FREQ.get(BASS_WEIGHT_END, '')}",
+                "range": f"{POINT_TO_FREQ.get(BASS_WEIGHT_START, '20Hz')} - {POINT_TO_FREQ.get(BASS_WEIGHT_END, '')}",
+                "value_count" : BASS_WEIGHT_END - BASS_WEIGHT_START
             },
-            "mid": {
+            "mids": {
                 "coeff": MIDRANGE_COEFF,
-                "range": f"{POINT_TO_FREQ.get(MIDRANGE_WEIGHT_START, '')} – {POINT_TO_FREQ.get(MIDRANGE_WEIGHT_END, '')}",
+                "range": f"{POINT_TO_FREQ.get(MIDRANGE_WEIGHT_START, '')} - {POINT_TO_FREQ.get(MIDRANGE_WEIGHT_END, '')}",
+                "value_count" : MIDRANGE_WEIGHT_END - MIDRANGE_WEIGHT_START
             },
             "canal": {
                 "coeff": CANAL_COEFF,
-                "range": f"{POINT_TO_FREQ.get(CANAL_WEIGHT_START, '')} – {POINT_TO_FREQ.get(CANAL_WEIGHT_END, '')}",
+                "range": f"{POINT_TO_FREQ.get(CANAL_WEIGHT_START, '')} - {POINT_TO_FREQ.get(CANAL_WEIGHT_END, '')}",
+                "value_count" : CANAL_WEIGHT_END - CANAL_WEIGHT_START
             },
             "pinna": {
                 "coeff": PINNA_COEFF,
-                "range": f"{POINT_TO_FREQ.get(PINNA_WEIGHT_START, '')} – {POINT_TO_FREQ.get(PINNA_WEIGHT_END, '')}",
+                "range": f"{POINT_TO_FREQ.get(PINNA_WEIGHT_START, '')} - {POINT_TO_FREQ.get(PINNA_WEIGHT_END, '')}",
+                "value_count" : PINNA_WEIGHT_END - PINNA_WEIGHT_START
             },
         },
     )
