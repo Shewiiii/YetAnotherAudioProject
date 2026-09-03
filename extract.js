@@ -58,7 +58,7 @@
         const brand = p.dispBrand || p.brand?.name || "";
         const model = p.dispName || p.phone || p.fullName || p.fileName;
 
-        const filename = clean(`${brand} ${model} (AVG).txt`);
+        const filename = clean(`${brand} ${model}.txt`);
 
         const txt =
             avg.map(([f, db]) => `${f} ${db.toFixed(15)}`).join("\n") + "\n";
