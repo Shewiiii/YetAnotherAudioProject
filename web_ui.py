@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.colors as mcolors
 import numpy as np
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, send_file
 
 from params import *
 
@@ -62,6 +62,7 @@ def init_data() -> dict:
     if not files:
         files = sorted(Path().glob(FREQUENCY_RESPONSES))
 
+    file_paths = {file.stem: file for file in files}
     frequency_response_dict = {file.stem: read_file(file) for file in files}
 
     target_file = find_target_file(TARGET)
@@ -148,6 +149,7 @@ def init_data() -> dict:
     items = []
     scores = []
     curves_indexed = {}
+    files_indexed = {}
 
     for idx, (iem, weighted_delta) in enumerate(sorted_deltas.items()):
         score = round(10 * np.exp(-weighted_delta / DECAY_FACTOR), 2)
@@ -163,13 +165,16 @@ def init_data() -> dict:
                 "weighted_delta": weighted_delta,
                 "color": color_hex,
                 "bar_width": min(max(score * 10, 0), 100),
-                "mainstream": any(brand.lower() in iem.lower() for brand in KNOWN_BRANDS),
+                "mainstream": any(
+                    brand.lower() in iem.lower() for brand in KNOWN_BRANDS
+                ),
             }
         )
         curves_indexed[idx] = {
             "name": iem,
             "data": iem_curves_by_id[iem],
         }
+        files_indexed[idx] = str(file_paths[iem])
 
     return {
         "items": items,
@@ -183,6 +188,7 @@ def init_data() -> dict:
         "pref_top": [round(float(v), 2) for v in pref_top_comp],
         "pref_bottom": [round(float(v), 2) for v in pref_bottom_comp],
         "iem_curves": curves_indexed,
+        "iem_files": files_indexed,
     }
 
 
@@ -457,8 +463,8 @@ HTML_TEMPLATE = """
             opacity: 1;
         }
 
-        /* Modal Overlay */
-        .modal-overlay {
+        /* Model Overlay */
+        .model-overlay {
             position: fixed;
             inset: 0;
             background-color: rgba(0, 0, 0, 0.78);
@@ -475,13 +481,13 @@ HTML_TEMPLATE = """
             transition: opacity 0.2s ease, visibility 0.2s ease;
         }
 
-        .modal-overlay.active {
+        .model-overlay.active {
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
         }
 
-        .modal-card {
+        .model-card {
             background: #101319;
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -496,26 +502,26 @@ HTML_TEMPLATE = """
             margin: auto;
         }
 
-        .modal-header {
+        .model-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             gap: 1rem;
         }
 
-        .modal-title {
+        .model-title {
             font-size: 1.15rem;
             font-weight: 600;
             color: #f5f5ff;
             word-break: break-word;
         }
 
-        .modal-subtitle {
+        .model-subtitle {
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
 
-        .modal-close {
+        .model-close {
             background: none;
             border: none;
             color: var(--text-secondary);
@@ -527,7 +533,7 @@ HTML_TEMPLATE = """
             transition: color 0.15s, background-color 0.15s;
         }
 
-        .modal-close:hover {
+        .model-close:hover {
             color: var(--text-primary);
             background-color: var(--bg-row-hover);
         }
@@ -542,7 +548,7 @@ HTML_TEMPLATE = """
 
         @media (max-width: 768px) {
             body { padding: 1.25rem 0.75rem; }
-            .modal-card { 
+            .model-card { 
                 padding: 0.85rem; 
                 width: 100%; 
                 max-height: 92vh; 
@@ -673,6 +679,63 @@ HTML_TEMPLATE = """
             border-color: transparent transparent #30363d transparent;
         }
 
+        .model-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .model-download,
+        .model-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-decoration: none;
+            position: relative;
+            transition: color 0.15s, background-color 0.15s;
+        }
+
+        .model-close {
+            font-size: 1.6rem;
+        }
+
+        .model-download:hover,
+        .model-close:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-row-hover);
+        }
+
+        /* Download popup styling */
+        .param-popup.download-popup {
+            width: 270px;
+            left: auto;
+            right: 0;
+            transform: translateY(-3px);
+            white-space: normal;
+            line-height: 1.35;
+            text-align: left;
+        }
+
+        .model-download:hover .download-popup {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .param-popup.download-popup::after {
+            left: auto;
+            right: 12px;
+            transform: none;
+        }
 
     </style>
 </head>
@@ -772,7 +835,7 @@ HTML_TEMPLATE = """
                         <th class="col-score">
                             <span class="score-header-hoverable">
                                 Score
-                                <span class="param-popup norm-popup">Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load)</span>
+                                <span class="param-popup norm-popup">Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load).</span>
                             </span>
                         </th>
                         <th class="col-delta">W Error</th>
@@ -783,7 +846,7 @@ HTML_TEMPLATE = """
                     <tr class="iem-row" data-name="{{ item.name.lower() }}" data-mainstream="{{ item.mainstream|lower }}">
                         <td class="col-rank">{{ item.rank }}</td>
                         <td class="col-name">
-                            <button class="iem-link" onclick="openGraphModal({{ item.id }})">
+                            <button class="iem-link" onclick="openGraphModel({{ item.id }})">
                                 <span>{{ item.name }}</span>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 3v18h18"/>
@@ -809,15 +872,27 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Modal Popup for Graph -->
-    <div id="graphModal" class="modal-overlay" onclick="handleBackdropClick(event)">
-        <div class="modal-card">
-            <div class="modal-header">
+    <!-- Model Popup for Graph -->
+    <div id="graphModel" class="model-overlay" onclick="handleBackdropClick(event)">
+        <div class="model-card">
+            <div class="model-header">
                 <div>
-                    <h2 id="modalTitle" class="modal-title">Frequency Response</h2>
-                    <p class="modal-subtitle">Compensated to JM-1 DF (Tilt -1dB/Oct)</p>
+                    <h2 id="modelTitle" class="model-title">Frequency Response</h2>
+                    <p class="model-subtitle">Compensated to JM-1 DF (Tilt -1dB/Oct)</p>
                 </div>
-                <button class="modal-close" onclick="closeGraphModal()">&times;</button>
+                <div class="model-actions">
+                    <a id="modelDownload" class="model-download" href="#">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span class="param-popup download-popup">
+                            Download the frequency response file. You can then import it on a SquigLink (I recommend listener800.github.io) and use the website as an EQ platform.
+                        </span>
+                    </a>
+                    <button class="model-close" onclick="closeGraphModel()">&times;</button>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="frChart"></canvas>
@@ -938,32 +1013,37 @@ HTML_TEMPLATE = """
         }
 
         function handleBackdropClick(event) {
-            if (event.target === document.getElementById('graphModal')) {
-                closeGraphModal();
+            if (event.target === document.getElementById('graphModel')) {
+                closeGraphModel();
             }
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeGraphModal();
+            if (e.key === 'Escape') closeGraphModel();
         });
 
-        function closeGraphModal() {
-            document.getElementById('graphModal').classList.remove('active');
+        function closeGraphModel() {
+            document.getElementById('graphModel').classList.remove('active');
             if (chartInstance) {
                 chartInstance.destroy();
                 chartInstance = null;
             }
         }
 
-        async function openGraphModal(id) {
+        async function openGraphModel(id) {
+            const downloadBtn = document.getElementById('modelDownload');
+            if (downloadBtn) {
+                downloadBtn.href = `/api/download/${id}`;
+            }
+
             const res = await fetch(`/api/graph/${id}`);
             const iem = await res.json();
 
             // Detect mobile width
             const isMobile = window.innerWidth < 768;
 
-            document.getElementById('modalTitle').textContent = iem.name;
-            document.getElementById('graphModal').classList.add('active');
+            document.getElementById('modelTitle').textContent = iem.name;
+            document.getElementById('graphModel').classList.add('active');
 
             if (chartInstance) {
                 chartInstance.destroy();
@@ -1222,6 +1302,19 @@ def get_graph_data(iem_id: int):
     if not curve:
         return jsonify({"error": "IEM not found"}), 404
     return jsonify(curve)
+
+
+@app.route("/api/download/<int:iem_id>")
+def download_iem(iem_id: int):
+    file_path_str = DATA_STORE.get("iem_files", {}).get(iem_id)
+    if not file_path_str:
+        return jsonify({"error": "File not found"}), 404
+
+    file_path = Path(file_path_str)
+    if not file_path.is_file():
+        return jsonify({"error": "File does not exist"}), 404
+
+    return send_file(file_path, as_attachment=True, download_name=file_path.name)
 
 
 if __name__ == "__main__":
