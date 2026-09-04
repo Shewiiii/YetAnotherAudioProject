@@ -234,7 +234,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Target Adherence Ranking</title>
+    <title>Shewi's IEM potential list</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -776,7 +776,7 @@ HTML_TEMPLATE = """
 
     <div class="container">
         <header>
-            <h1>Target Adherence Ranking</h1>
+            <h1>Shewi's IEM potential list</h1>
             <p class="subtitle">{{ target_name }}</p>
             <p class="ranking-metadata">
                 <span>Rig:</span>
