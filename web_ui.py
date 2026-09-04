@@ -605,14 +605,12 @@ HTML_TEMPLATE = """
         .param-popup.norm-popup {
             width: min(320px, 80vw);
             white-space: normal;
-            line-height: 1.35;
             text-align: left;
         }
 
         .param-popup.decay-popup {
             width: 320px;
             white-space: normal;
-            line-height: 1.4;
             text-align: left;
         }
 
@@ -633,9 +631,6 @@ HTML_TEMPLATE = """
         .decay-formula {
             display: block;
             margin: 0.35rem 0;
-            color: #ffffff;
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: 1rem;
             text-align: center;
         }
 
@@ -648,11 +643,14 @@ HTML_TEMPLATE = """
             /* Apply horizontal offset through --shift-x */
             transform: translateX(calc(-50% + var(--shift-x, 0px))) translateY(-3px);
             background-color: #161820;
-            color: #f5f5ff;
+            color: var(--text-secondary);
             border: 1px solid #30363d;
             border-radius: 6px;
             padding: 0.25rem 0.55rem;
             font-size: 0.75rem;
+            font-weight: 300;
+            font-family: inherit;
+            line-height: 1.35;
             white-space: nowrap;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             pointer-events: none;
@@ -714,14 +712,12 @@ HTML_TEMPLATE = """
             background-color: var(--bg-row-hover);
         }
 
-        /* Download popup styling */
         .param-popup.download-popup {
             width: 270px;
             left: auto;
             right: 0;
             transform: translateY(-3px);
             white-space: normal;
-            line-height: 1.35;
             text-align: left;
         }
 
@@ -740,6 +736,10 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
+    {% macro popup(class_name="") %}
+        <span class="param-popup{% if class_name %} {{ class_name }}{% endif %}">{{ caller() }}</span>
+    {% endmacro %}
+
     <div class="container">
         <header>
             <h1>Target Adherence Ranking</h1>
@@ -748,45 +748,45 @@ HTML_TEMPLATE = """
                 <span>Rig:</span>
                 <span class="hoverable-param">
                     B&amp;K 5128
-                    <span class="param-popup norm-popup">Industry standard measurement rig. Complies with ITU-T Rec. P.58 and has the most accurate acoustic input impedance, which is crutial in the measurement accuracy of high output impedance devices such as IEMs or true wireless earphones.</span>
+                    {% call popup("norm-popup") %}Industry standard measurement rig. Complies with ITU-T Rec. P.58 and has the most accurate acoustic input impedance, which is crutial in the measurement accuracy of high output impedance devices such as IEMs or true wireless earphones.{% endcall %}
                 </span> &nbsp;|&nbsp;
                 <span>Norm:</span>
                 <span class="hoverable-param">
                     {{ norm_freq }}
-                    <span class="param-popup norm-popup">A fixed normalization is not ideal, as a peak/dip at the normalization frequency could considerably lower the score. However, a choice must be made and good IEMs should not behave that way anyways.</span>
+                    {% call popup("norm-popup") %}A fixed normalization is not ideal, as a peak/dip at the normalization frequency could considerably lower the score. However, a choice must be made and good IEMs should not behave that way anyways.{% endcall %}
                 </span> &nbsp;|&nbsp;
                 <span>Decay Factor:</span>
                 <span class="hoverable-param" onmouseenter="drawDecayChart()">
                     {{ decay_factor }}
-                    <span class="param-popup decay-popup">
+                    {% call popup("decay-popup") %}
                         Controls how quickly the score decreases as the weighted error (Δ) increases.
                         <span class="decay-formula">Score = 10 × e<sup>−Δ / D</sup></span>
                         A larger <i>D</i> makes the score fall less aggressively.
                         <span class="decay-chart-container">
                             <canvas id="decayChart"></canvas>
                         </span>
-                    </span>
+                    {% endcall %}
                 </span> &nbsp;|&nbsp;
                 <span>Weights:</span>
                 <span class="hoverable-param">
                     Sub: {{ weights.sub.coeff }}
-                    <span class="param-popup">{{ weights.sub.range }} | {{ weights.sub.value_count }} values</span>
+                    {% call popup() %}{{ weights.sub.range }} | {{ weights.sub.value_count }} values{% endcall %}
                 </span> &bull; 
                 <span class="hoverable-param">
                     Bass: {{ weights.bass.coeff }}
-                    <span class="param-popup">{{ weights.bass.range }} | {{ weights.bass.value_count }} values</span>
+                    {% call popup() %}{{ weights.bass.range }} | {{ weights.bass.value_count }} values{% endcall %}
                 </span> &bull; 
                 <span class="hoverable-param">
                     Mids: {{ weights.mids.coeff }}
-                    <span class="param-popup">{{ weights.mids.range }} | {{ weights.mids.value_count }} values</span>
+                    {% call popup() %}{{ weights.mids.range }} | {{ weights.mids.value_count }} values{% endcall %}
                 </span> &bull; 
                 <span class="hoverable-param">
                     Canal: {{ weights.canal.coeff }}
-                    <span class="param-popup">{{ weights.canal.range }} | {{ weights.canal.value_count }} values</span>
+                    {% call popup() %}{{ weights.canal.range }} | {{ weights.canal.value_count }} values{% endcall %}
                 </span> &bull; 
                 <span class="hoverable-param">
                     Pinna: {{ weights.pinna.coeff }}
-                    <span class="param-popup">{{ weights.pinna.range }} | {{ weights.pinna.value_count }} values</span>
+                    {% call popup() %}{{ weights.pinna.range }} | {{ weights.pinna.value_count }} values{% endcall %}
                 </span>
             </p>
         </header>
@@ -835,7 +835,7 @@ HTML_TEMPLATE = """
                         <th class="col-score">
                             <span class="score-header-hoverable">
                                 Score
-                                <span class="param-popup norm-popup">Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load).</span>
+                                {% call popup("norm-popup") %}Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load).{% endcall %}
                             </span>
                         </th>
                         <th class="col-delta">W Error</th>
@@ -887,9 +887,9 @@ HTML_TEMPLATE = """
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span class="param-popup download-popup">
-                            Download the frequency response file. You can then import it on a SquigLink (I recommend listener800.github.io) and use the website as an EQ platform.
-                        </span>
+                        {% call popup("download-popup") %}
+                            Download the frequency response file. You can then import it on a SquigLink (listener800.github.io/5128iem is great), and use the website as an EQ platform.
+                        {% endcall %}
                     </a>
                     <button class="model-close" onclick="closeGraphModel()">&times;</button>
                 </div>
