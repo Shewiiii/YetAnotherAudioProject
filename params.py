@@ -38,7 +38,7 @@ NORMALIZATION_SPL = 60  # in dB but probably does not matter
 DATA_LIMIT = 481
 
 # Scale factor for exponential decay; lower = agressive drop, higher = flatter
-DECAY_FACTOR = 3000
+DECAY_FACTOR = 2700
 
 POINT_TO_FREQ = {
     66: "50Hz",

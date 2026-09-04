@@ -26,6 +26,29 @@ def normalize(spl: np.ndarray) -> np.ndarray:
     return spl - (spl[NORMALIZATION_POINT] - NORMALIZATION_SPL)
 
 
+def best_normalized_curve(
+    spl: np.ndarray,
+    target_spl: np.ndarray,
+    weights: np.ndarray,
+) -> tuple[np.ndarray, int]:
+    candidate_count = min(DATA_LIMIT, spl.size, target_spl.size, weights.size)
+    if candidate_count == 0:
+        raise ValueError("Cannot normalize an empty frequency response")
+
+    comparison_limit = min(DATA_LIMIT, candidate_count)
+    candidate_curves = spl[:comparison_limit, None] - spl[:candidate_count]
+    candidate_curves = spl[None, :comparison_limit] - (
+        spl[:candidate_count, None] - NORMALIZATION_SPL
+    )
+    errors = np.sum(
+        np.abs(target_spl[:comparison_limit] - candidate_curves)
+        * weights[:comparison_limit],
+        axis=1,
+    )
+    best_point = int(np.argmin(errors))
+    return spl - (spl[best_point] - NORMALIZATION_SPL), best_point
+
+
 def find_target_file(name_pattern: str) -> Path:
     search_dirs = [
         BASE_DIR,
@@ -118,17 +141,24 @@ def init_data() -> dict:
 
     deltas = {}
     iem_curves_by_id = {}
+    iem_normalization_points = {}
 
     for iem, (freq, spl) in frequency_response_dict.items():
         if not EXCLUDE_PROJECTS or "project" not in iem.lower():
-            spl_interp = normalize(
-                np.interp(np.log10(common_freq), np.log10(freq), spl)
+            interpolated_spl = np.interp(
+                np.log10(common_freq), np.log10(freq), spl
             )
-            deltas[iem] = int(
+            spl_interp, normalization_point = best_normalized_curve(
+                interpolated_spl,
+                target_spl,
+                weights,
+            )
+            deltas[iem] = float(
                 np.sum(
                     np.abs(target_spl_sliced - spl_interp[:DATA_LIMIT]) * weights_sliced
                 )
             )
+            iem_normalization_points[iem] = normalization_point
 
             comp_spl = (spl_interp - jm1_df_baseline)[:DATA_LIMIT]
             iem_curves_by_id[iem] = [round(float(v), 2) for v in comp_spl]
@@ -162,7 +192,7 @@ def init_data() -> dict:
                 "rank": idx + 1,
                 "name": iem,
                 "score": score,
-                "weighted_delta": weighted_delta,
+                "weighted_delta": round(weighted_delta),
                 "color": color_hex,
                 "bar_width": min(max(score * 10, 0), 100),
                 "mainstream": any(
@@ -188,6 +218,10 @@ def init_data() -> dict:
         "pref_top": [round(float(v), 2) for v in pref_top_comp],
         "pref_bottom": [round(float(v), 2) for v in pref_bottom_comp],
         "iem_curves": curves_indexed,
+        "iem_normalization_points": {
+            idx: iem_normalization_points[iem]
+            for idx, (iem, _) in enumerate(sorted_deltas.items())
+        },
         "iem_files": files_indexed,
     }
 
@@ -752,8 +786,8 @@ HTML_TEMPLATE = """
                 </span> &nbsp;|&nbsp;
                 <span>Norm:</span>
                 <span class="hoverable-param">
-                    {{ norm_freq }}
-                    {% call popup("norm-popup") %}A fixed normalization is not ideal, as a peak/dip at the normalization frequency could considerably lower the score. However, a choice must be made and good IEMs should not behave that way anyways.{% endcall %}
+                    Variable
+                    {% call popup("norm-popup") %}Attemps to find the best normalization frequency for each earphone.{% endcall %}
                 </span> &nbsp;|&nbsp;
                 <span>Decay Factor:</span>
                 <span class="hoverable-param" onmouseenter="drawDecayChart()">
@@ -1264,7 +1298,6 @@ def index():
         HTML_TEMPLATE,
         data=DATA_STORE,
         target_name=TARGET,
-        norm_freq=POINT_TO_FREQ.get(NORMALIZATION_POINT, "1kHz"),
         decay_factor=DECAY_FACTOR,
         weights={
             "sub": {
