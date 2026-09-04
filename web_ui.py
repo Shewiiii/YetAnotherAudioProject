@@ -130,7 +130,7 @@ def init_data() -> dict:
     bottom_val_500 = np.interp(np.log10(500.0), np.log10(bottom_freq), bottom_spl)
     pref_bottom_comp = bottom_spl_interp - bottom_val_500 - 1.25
 
-    # 5. Score calculation
+    # 5. Potential calculation
     weights = np.ones_like(common_freq, dtype=float)
     weights[SUB_WEIGHT_START:SUB_WEIGHT_END] = SUB_COEFF
     weights[BASS_WEIGHT_START:BASS_WEIGHT_END] = BASS_COEFF
@@ -177,24 +177,24 @@ def init_data() -> dict:
     norm = mcolors.Normalize(vmin=0, vmax=8.25)
 
     items = []
-    scores = []
+    potentials = []
     curves_indexed = {}
     files_indexed = {}
 
     for idx, (iem, weighted_delta) in enumerate(sorted_deltas.items()):
-        score = round(10 * np.exp(-weighted_delta / DECAY_FACTOR), 2)
-        scores.append(score)
-        color_hex = mcolors.to_hex(cmap(norm(score)))
+        potential = round(10 * np.exp(-weighted_delta / DECAY_FACTOR), 2)
+        potentials.append(potential)
+        color_hex = mcolors.to_hex(cmap(norm(potential)))
 
         items.append(
             {
                 "id": idx,
                 "rank": idx + 1,
                 "name": iem,
-                "score": score,
+                "potential": potential,
                 "weighted_delta": round(weighted_delta),
                 "color": color_hex,
-                "bar_width": min(max(score * 10, 0), 100),
+                "bar_width": min(max(potential * 10, 0), 100),
                 "mainstream": any(
                     brand.lower() in iem.lower() for brand in KNOWN_BRANDS
                 ),
@@ -209,9 +209,9 @@ def init_data() -> dict:
     return {
         "items": items,
         "total_count": len(items),
-        "median_score": round(float(np.median(scores)), 2) if scores else 0.0,
-        "top_score": scores[0] if scores else 0.0,
-        "lowest_score": scores[-1] if scores else 0.0,
+        "median_potential": round(float(np.median(potentials)), 2) if potentials else 0.0,
+        "top_potential": potentials[0] if potentials else 0.0,
+        "lowest_potential": potentials[-1] if potentials else 0.0,
         "freqs": sliced_freqs,
         "shewi_comp": [round(float(v), 2) for v in shewi_comp],
         "jm1_comp": [round(float(v), 2) for v in jm1_comp],
@@ -409,12 +409,12 @@ HTML_TEMPLATE = """
             font-weight: 600;
         }
 
-        .col-score {
+        .col-potential {
             width: 240px;
             font-size: 0.9rem;
         }
 
-        .score-header-hoverable {
+        .potential-header-hoverable {
             position: relative;
             display: inline-block;
             color: inherit;
@@ -434,13 +434,13 @@ HTML_TEMPLATE = """
             font-size: 0.9rem;
         }
 
-        .score-cell {
+        .potential-cell {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .score-pill {
+        .potential-pill {
             display: inline-block;
             min-width: 48px;
             padding: 0.15rem 0.5rem;
@@ -452,7 +452,7 @@ HTML_TEMPLATE = """
             font-variant-numeric: tabular-nums;
         }
 
-        .score-bar-track {
+        .potential-bar-track {
             flex-grow: 1;
             height: 6px;
             background-color: #21262d;
@@ -460,7 +460,7 @@ HTML_TEMPLATE = """
             overflow: hidden;
         }
 
-        .score-bar-fill {
+        .potential-bar-fill {
             height: 100%;
             border-radius: 3px;
         }
@@ -599,9 +599,9 @@ HTML_TEMPLATE = """
             .count-tag { text-align: left; max-width: none; }
             .col-delta { display: none; }
             .col-rank { width: 38px; }
-            .col-score { width: 72px; }
+            .col-potential { width: 72px; }
             th, td { padding: 0.65rem 0.5rem; }
-            .score-bar-track { display: none; }
+            .potential-bar-track { display: none; }
             .stats-grid { 
                 grid-template-columns: repeat(2, 1fr); 
                 gap: 0.6rem; 
@@ -693,7 +693,7 @@ HTML_TEMPLATE = """
         }
 
         .hoverable-param:hover .param-popup,
-        .score-header-hoverable:hover .param-popup {
+        .potential-header-hoverable:hover .param-popup {
             visibility: visible;
             opacity: 1;
             transform: translateX(calc(-50% + var(--shift-x, 0px))) translateY(0);
@@ -793,9 +793,9 @@ HTML_TEMPLATE = """
                 <span class="hoverable-param" onmouseenter="drawDecayChart()">
                     {{ decay_factor }}
                     {% call popup("decay-popup") %}
-                        Controls how quickly the score decreases as the weighted error (Δ) increases.
-                        <span class="decay-formula">Score = 10 × e<sup>−Δ / D</sup></span>
-                        A larger <i>D</i> makes the score fall less aggressively.
+                        Controls how quickly the potential decreases as the weighted error (Δ) increases.
+                        <span class="decay-formula">Potential = 10 × e<sup>−Δ / D</sup></span>
+                        A larger <i>D</i> makes the potential fall less aggressively.
                         <span class="decay-chart-container">
                             <canvas id="decayChart"></canvas>
                         </span>
@@ -831,16 +831,16 @@ HTML_TEMPLATE = """
                 <strong>{{ data['total_count'] }}</strong>
             </div>
             <div class="stat-card">
-                <span>Median Score</span>
-                <strong>{{ data['median_score'] }}</strong>
+                <span>Median Potential</span>
+                <strong>{{ data['median_potential'] }}</strong>
             </div>
             <div class="stat-card">
-                <span>Highest Score</span>
-                <strong>{{ data['top_score'] }}</strong>
+                <span>Highest Potential</span>
+                <strong>{{ data['top_potential'] }}</strong>
             </div>
             <div class="stat-card">
-                <span>Lowest Score</span>
-                <strong>{{ data['lowest_score'] }}</strong>
+                <span>Lowest Potential</span>
+                <strong>{{ data['lowest_potential'] }}</strong>
             </div>
         </div>
 
@@ -866,10 +866,10 @@ HTML_TEMPLATE = """
                     <tr>
                         <th class="col-rank">#</th>
                         <th>Model</th>
-                        <th class="col-score">
-                            <span class="score-header-hoverable">
-                                Score
-                                {% call popup("norm-popup") %}Should not be taken too seriously: you can easily add or substract 0.5 to the score, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load).{% endcall %}
+                        <th class="col-potential">
+                            <span class="potential-header-hoverable">
+                                Potential
+                                {% call popup("norm-popup") %}Should not be taken too seriously: you can easily add or substract 0.5 to the potential, because of positional variation, eartip used, or HpTF variation (not depending on anatomy but the IEM's load).{% endcall %}
                             </span>
                         </th>
                         <th class="col-delta">W Error</th>
@@ -888,13 +888,13 @@ HTML_TEMPLATE = """
                                 </svg>
                             </button>
                         </td>
-                        <td class="col-score">
-                            <div class="score-cell">
-                                <span class="score-pill" style="background-color: {{ item.color }};">
-                                    {{ "%.2f"|format(item.score) }}
+                        <td class="col-potential">
+                            <div class="potential-cell">
+                                <span class="potential-pill" style="background-color: {{ item.color }};">
+                                    {{ "%.2f"|format(item.potential) }}
                                 </span>
-                                <div class="score-bar-track">
-                                    <div class="score-bar-fill" style="width: {{ item.bar_width }}%; background-color: {{ item.color }};"></div>
+                                <div class="potential-bar-track">
+                                    <div class="potential-bar-fill" style="width: {{ item.bar_width }}%; background-color: {{ item.color }};"></div>
                                 </div>
                             </div>
                         </td>
@@ -962,7 +962,7 @@ HTML_TEMPLATE = """
             decayChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: { datasets: [{
-                    label: 'Score',
+                    label: 'Potential',
                     data: points,
                     borderColor: '#684EEB',
                     backgroundColor: gradient,
@@ -996,7 +996,7 @@ HTML_TEMPLATE = """
                             min: 0, max: 10,
                             grid: { color: '#1a1f26', borderColor: '#30363d' },
                             ticks: { color: '#9aa1b3', stepSize: 2, font: { family: 'Poppins' } },
-                            title: { display: true, text: 'Score', color: '#9aa1b3', font: { family: 'Poppins' } }
+                            title: { display: true, text: 'Potential', color: '#9aa1b3', font: { family: 'Poppins' } }
                         }
                     },
                     plugins: {
@@ -1006,7 +1006,7 @@ HTML_TEMPLATE = """
                             bodyFont: { family: 'Poppins' },
                             callbacks: {
                                 title: items => `Δ = ${Math.round(items[0].parsed.x)}`,
-                                label: item => ` Score: ${item.parsed.y.toFixed(2)}`
+                                label: item => ` Potential: ${item.parsed.y.toFixed(2)}`
                             }
                         }
                     }
@@ -1019,31 +1019,31 @@ HTML_TEMPLATE = """
             const mainstreamOnly = document.getElementById('mainstream-only').checked;
             const rows = document.querySelectorAll('.iem-row');
             let visibleCount = 0;
-            const visibleScores = [];
+            const visiblePotentials = [];
 
             rows.forEach(row => {
                 const name = row.getAttribute('data-name');
                 if (name.includes(query) && (!mainstreamOnly || row.dataset.mainstream === 'true')) {
                     row.style.display = '';
                     visibleCount++;
-                    visibleScores.push(parseFloat(row.querySelector('.score-pill').textContent));
+                    visiblePotentials.push(parseFloat(row.querySelector('.potential-pill').textContent));
                 } else {
                     row.style.display = 'none';
                 }
             });
 
             document.getElementById('visible-count').textContent = `Showing ${visibleCount} items`;
-            const sortedScores = visibleScores.sort((a, b) => a - b);
-            const median = sortedScores.length
-                ? (sortedScores.length % 2
-                    ? sortedScores[(sortedScores.length - 1) / 2]
-                    : (sortedScores[sortedScores.length / 2 - 1] + sortedScores[sortedScores.length / 2]) / 2)
+            const sortedPotentials = visiblePotentials.sort((a, b) => a - b);
+            const median = sortedPotentials.length
+                ? (sortedPotentials.length % 2
+                    ? sortedPotentials[(sortedPotentials.length - 1) / 2]
+                    : (sortedPotentials[sortedPotentials.length / 2 - 1] + sortedPotentials[sortedPotentials.length / 2]) / 2)
                 : 0;
             const stats = document.querySelectorAll('.stat-card strong');
             stats[0].textContent = visibleCount;
             stats[1].textContent = median.toFixed(2);
-            stats[2].textContent = visibleScores.length ? Math.max(...visibleScores).toFixed(2) : '0.00';
-            stats[3].textContent = visibleScores.length ? Math.min(...visibleScores).toFixed(2) : '0.00';
+            stats[2].textContent = visiblePotentials.length ? Math.max(...visiblePotentials).toFixed(2) : '0.00';
+            stats[3].textContent = visiblePotentials.length ? Math.min(...visiblePotentials).toFixed(2) : '0.00';
         }
 
         function handleBackdropClick(event) {
@@ -1274,7 +1274,7 @@ HTML_TEMPLATE = """
         }
 
         function updateAllPopups() {
-            document.querySelectorAll('.hoverable-param, .score-header-hoverable').forEach(updatePopupPosition);
+            document.querySelectorAll('.hoverable-param, .potential-header-hoverable').forEach(updatePopupPosition);
         }
 
         // Pre-calculate on load and resize so values are ready before hovering
@@ -1283,7 +1283,7 @@ HTML_TEMPLATE = """
         updateAllPopups();
 
         // Ensure position is accurate on hover
-        document.querySelectorAll('.hoverable-param, .score-header-hoverable').forEach(item => {
+        document.querySelectorAll('.hoverable-param, .potential-header-hoverable').forEach(item => {
             item.addEventListener('mouseenter', () => updatePopupPosition(item));
         });
     </script>
