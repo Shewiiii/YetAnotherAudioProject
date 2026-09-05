@@ -261,7 +261,7 @@
             align-items: center;
             margin-left: 0.35rem;
             color: var(--text-secondary);
-            cursor: help;
+            cursor: default;
             vertical-align: middle;
         }
 
