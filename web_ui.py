@@ -216,6 +216,7 @@ def init_data() -> dict:
                 "weighted_delta": round(weighted_delta),
                 "color": color_hex,
                 "bar_width": min(max(potential * 10, 0), 100),
+                "has_neutral_fr": iem in neutral_curves_by_id,
                 "mainstream": any(
                     brand.lower() in iem.lower() for brand in KNOWN_BRANDS
                 ),

@@ -190,6 +190,27 @@
                                         <path d="m19 9-5 5-4-4-3 3" />
                                     </svg>
                                 </button>
+                                {% if item.has_neutral_fr %}
+                                <span class="neutral-fr-indicator hoverable-param">
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        aria-label="Neutral FR available"
+                                    >
+                                        <path d="M4 7h16" />
+                                        <path d="M4 12h16" />
+                                        <path d="M4 17h16" />
+                                        <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none" />
+                                        <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+                                        <circle cx="11" cy="17" r="2" fill="currentColor" stroke="none" />
+                                    </svg>
+                                        {% call popup("neutral-fr-popup") %}This earphone has been equalized so it sounds neutral to my ears. You can see the result in red.{% endcall %}
+                                </span>
+                                {% endif %}
                             </td>
                             <td class="col-potential">
                                 <div class="potential-cell">

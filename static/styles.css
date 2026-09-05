@@ -255,6 +255,29 @@
             opacity: 1;
         }
 
+        .neutral-fr-indicator {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.35rem;
+            color: var(--text-secondary);
+            cursor: help;
+            vertical-align: middle;
+        }
+
+        .neutral-fr-indicator svg {
+            opacity: 0.55;
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .neutral-fr-indicator:hover {
+            color: var(--accent);
+        }
+
+        .neutral-fr-indicator:hover svg {
+            opacity: 1;
+        }
+
         /* Model Overlay */
         .model-overlay {
             position: fixed;
@@ -405,6 +428,13 @@
             white-space: normal;
             text-align: left;
         }
+
+            .param-popup.neutral-fr-popup {
+                width: min(320px, 80vw);
+                white-space: normal;
+                overflow-wrap: anywhere;
+                text-align: left;
+            }
 
         .decay-chart-container {
             position: relative;
