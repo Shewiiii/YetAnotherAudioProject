@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Shewi's IEM potential list</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='styles.css') }}"
+        />
+    </head>
+    <body>
+        {% macro popup(class_name="") %}
+        <span class="param-popup{% if class_name %} {{ class_name }}{% endif %}"
+            >{{ caller() }}</span
+        >
+        {% endmacro %}
+
+        <div class="container">
+            <header>
+                <h1>Shewi's IEM potential list</h1>
+                <p class="subtitle">{{ target_name }}</p>
+                <p class="ranking-metadata">
+                    <span>Rig:</span>
+                    <span class="hoverable-param">
+                        B&amp;K 5128 {% call popup("norm-popup") %}Industry
+                        standard measurement rig. Complies with ITU-T Rec. P.58
+                        and has the most accurate acoustic input impedance,
+                        which is crutial in the measurement accuracy of high
+                        output impedance devices such as IEMs or true wireless
+                        earphones.{% endcall %}
+                    </span>
+                    &nbsp;|&nbsp;
+                    <span>Norm:</span>
+                    <span class="hoverable-param">
+                        Variable {% call popup("norm-popup") %}Attemps to find
+                        the best normalization frequency for each earphone.
+                        Weights are ignored during calculation.{% endcall %}
+                    </span>
+                    &nbsp;|&nbsp;
+                    <span>Decay Factor:</span>
+                    <span
+                        class="hoverable-param"
+                        onmouseenter="drawDecayChart()"
+                    >
+                        {{ decay_factor }} {% call popup("decay-popup") %}
+                        Controls how quickly the potential decreases as the
+                        weighted error (Δ) increases.
+                        <span class="decay-formula"
+                            >Potential = 10 × e<sup>−Δ / D</sup></span
+                        >
+                        A larger <i>D</i> makes the potential fall less
+                        aggressively.
+                        <span class="decay-chart-container">
+                            <canvas id="decayChart"></canvas>
+                        </span>
+                        {% endcall %}
+                    </span>
+                    &nbsp;|&nbsp;
+                    <span>Weights:</span>
+                    <span class="hoverable-param">
+                        Sub: {{ weights.sub.coeff }} {% call popup() %}{{
+                        weights.sub.range }} | {{ weights.sub.value_count }}
+                        values{% endcall %}
+                    </span>
+                    &bull;
+                    <span class="hoverable-param">
+                        Bass: {{ weights.bass.coeff }} {% call popup() %}{{
+                        weights.bass.range }} | {{ weights.bass.value_count }}
+                        values{% endcall %}
+                    </span>
+                    &bull;
+                    <span class="hoverable-param">
+                        Mids: {{ weights.mids.coeff }} {% call popup() %}{{
+                        weights.mids.range }} | {{ weights.mids.value_count }}
+                        values{% endcall %}
+                    </span>
+                    &bull;
+                    <span class="hoverable-param">
+                        Canal: {{ weights.canal.coeff }} {% call popup() %}{{
+                        weights.canal.range }} | {{ weights.canal.value_count }}
+                        values{% endcall %}
+                    </span>
+                    &bull;
+                    <span class="hoverable-param">
+                        Pinna: {{ weights.pinna.coeff }} {% call popup() %}{{
+                        weights.pinna.range }} | {{ weights.pinna.value_count }}
+                        values{% endcall %}
+                    </span>
+                </p>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span>Total Evaluated</span>
+                    <strong>{{ data['total_count'] }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Median Potential</span>
+                    <strong>{{ data['median_potential'] }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Highest Potential</span>
+                    <strong>{{ data['top_potential'] }}</strong>
+                </div>
+                <div class="stat-card">
+                    <span>Lowest Potential</span>
+                    <strong>{{ data['lowest_potential'] }}</strong>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <input
+                    type="text"
+                    id="search"
+                    class="search-input"
+                    placeholder="Search earphone or brand..."
+                    oninput="filterIEMs()"
+                    autocomplete="off"
+                />
+                <label class="mainstream-filter">
+                    <input
+                        type="checkbox"
+                        id="mainstream-only"
+                        {%
+                        if
+                        ONLY_KNOWN_BRANDS
+                        %}checked{%
+                        endif
+                        %}
+                        onchange="filterIEMs()"
+                    />
+                    Only include mainstream brands
+                </label>
+                <span class="count-tag" id="visible-count"
+                    >Showing {{ data['total_count'] }} items</span
+                >
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-rank">#</th>
+                            <th>Model</th>
+                            <th class="col-potential">
+                                <span class="potential-header-hoverable">
+                                    Potential {% call popup("norm-popup")
+                                    %}Should not be taken too seriously: you can
+                                    easily add or substract 0.5 to the
+                                    potential, because of positional variation,
+                                    eartip used, or HpTF variation (not
+                                    depending on anatomy but the IEM's load).{%
+                                    endcall %}
+                                </span>
+                            </th>
+                            <th class="col-delta">W Error</th>
+                        </tr>
+                    </thead>
+                    <tbody id="iem-table-body">
+                        {% for item in data['items'] %}
+                        <tr
+                            class="iem-row"
+                            data-name="{{ item.name.lower() }}"
+                            data-mainstream="{{ item.mainstream|lower }}"
+                        >
+                            <td class="col-rank">{{ item.rank }}</td>
+                            <td class="col-name">
+                                <button
+                                    class="iem-link"
+                                    onclick="openGraphModel({{ item.id }})"
+                                >
+                                    <span>{{ item.name }}</span>
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path d="M3 3v18h18" />
+                                        <path d="m19 9-5 5-4-4-3 3" />
+                                    </svg>
+                                </button>
+                            </td>
+                            <td class="col-potential">
+                                <div class="potential-cell">
+                                    <span
+                                        class="potential-pill"
+                                        style="background-color: {{ item.color }};"
+                                    >
+                                        {{ "%.2f"|format(item.potential) }}
+                                    </span>
+                                    <div class="potential-bar-track">
+                                        <div
+                                            class="potential-bar-fill"
+                                            style="width: {{ item.bar_width }}%; background-color: {{ item.color }};"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="col-delta">{{ item.weighted_delta }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Model Popup for Graph -->
+        <div
+            id="graphModel"
+            class="model-overlay"
+            onclick="handleBackdropClick(event)"
+        >
+            <div class="model-card">
+                <div class="model-header">
+                    <div>
+                        <h2 id="modelTitle" class="model-title">
+                            Frequency Response
+                        </h2>
+                        <p class="model-subtitle">
+                            Compensated to JM-1 DF (Tilt -1dB/Oct)
+                        </p>
+                    </div>
+                    <div class="model-actions">
+                        <a id="modelDownload" class="model-download" href="#">
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                ></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            {% call popup("download-popup") %} Download the
+                            frequency response file. You can then import it on a
+                            SquigLink (listener800.github.io/5128iem is great),
+                            and use the website as an EQ platform. {% endcall %}
+                        </a>
+                        <button class="model-close" onclick="closeGraphModel()">
+                            &times;
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="frChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const freqs = {{ data['freqs'] | tojson }};
+            const shewiComp = {{ data['shewi_comp'] | tojson }};
+            const jm1Comp = {{ data['jm1_comp'] | tojson }};
+            const prefTop = {{ data['pref_top'] | tojson }};
+            const prefBottom = {{ data['pref_bottom'] | tojson }};
+            const decayFactor = {{ decay_factor | tojson }};
+            let chartInstance = null;
+            let decayChartInstance = null;
+
+            function drawDecayChart() {
+                if (decayChartInstance) return;
+                const canvas = document.getElementById('decayChart');
+                if (!canvas) return;
+
+                const deltas = [500, 650, 850, 1100, 1450, 1900, 2500, 3300, 4300, 5600, 7300, 10000];
+                const points = deltas.map(delta => ({
+                    x: delta,
+                    y: 10 * Math.exp(-delta / decayFactor)
+                }));
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+                gradient.addColorStop(0, 'rgba(104, 78, 235, 0.4)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                decayChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [{
+                        label: 'Potential',
+                        data: points,
+                        borderColor: '#684EEB',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.25
+                    }] },
+                    options: {
+                        animation: { duration: 500 },
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        font: { family: 'Poppins' },
+                        scales: {
+                            x: {
+                                type: 'logarithmic', min: 500, max: 10000,
+                                grid: { color: '#1f242d', borderColor: '#30363d' },
+                                ticks: {
+                                    color: '#9aa1b3',
+                                    font: { family: 'Poppins' },
+                                    autoSkip: false,
+                                    callback: value => {
+                                        const tickValues = [500, 1000, 2000, 5000, 10000];
+                                        if (!tickValues.includes(Number(value))) return null;
+                                        return value >= 1000 ? `${value / 1000}k` : '500';
+                                    }
+                                },
+                                title: { display: true, text: 'Δ', color: '#9aa1b3', font: { family: 'Poppins' } }
+                            },
+                            y: {
+                                min: 0, max: 10,
+                                grid: { color: '#1a1f26', borderColor: '#30363d' },
+                                ticks: { color: '#9aa1b3', stepSize: 2, font: { family: 'Poppins' } },
+                                title: { display: true, text: 'Potential', color: '#9aa1b3', font: { family: 'Poppins' } }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                titleFont: { family: 'Poppins' },
+                                bodyFont: { family: 'Poppins' },
+                                callbacks: {
+                                    title: items => `Δ = ${Math.round(items[0].parsed.x)}`,
+                                    label: item => ` Potential: ${item.parsed.y.toFixed(2)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function filterIEMs() {
+                const query = document.getElementById('search').value.toLowerCase().trim();
+                const mainstreamOnly = document.getElementById('mainstream-only').checked;
+                const rows = document.querySelectorAll('.iem-row');
+                let visibleCount = 0;
+                const visiblePotentials = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name');
+                    if (name.includes(query) && (!mainstreamOnly || row.dataset.mainstream === 'true')) {
+                        row.style.display = '';
+                        visibleCount++;
+                        visiblePotentials.push(parseFloat(row.querySelector('.potential-pill').textContent));
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                document.getElementById('visible-count').textContent = `Showing ${visibleCount} items`;
+                const sortedPotentials = visiblePotentials.sort((a, b) => a - b);
+                const median = sortedPotentials.length
+                    ? (sortedPotentials.length % 2
+                        ? sortedPotentials[(sortedPotentials.length - 1) / 2]
+                        : (sortedPotentials[sortedPotentials.length / 2 - 1] + sortedPotentials[sortedPotentials.length / 2]) / 2)
+                    : 0;
+                const stats = document.querySelectorAll('.stat-card strong');
+                stats[0].textContent = visibleCount;
+                stats[1].textContent = median.toFixed(2);
+                stats[2].textContent = visiblePotentials.length ? Math.max(...visiblePotentials).toFixed(2) : '0.00';
+                stats[3].textContent = visiblePotentials.length ? Math.min(...visiblePotentials).toFixed(2) : '0.00';
+            }
+
+            function handleBackdropClick(event) {
+                if (event.target === document.getElementById('graphModel')) {
+                    closeGraphModel();
+                }
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeGraphModel();
+            });
+
+            function closeGraphModel() {
+                document.getElementById('graphModel').classList.remove('active');
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+            }
+
+            async function openGraphModel(id) {
+                const downloadBtn = document.getElementById('modelDownload');
+                if (downloadBtn) {
+                    downloadBtn.href = `/api/download/${id}`;
+                }
+
+                const res = await fetch(`/api/graph/${id}`);
+                const iem = await res.json();
+
+                // Detect mobile width
+                const isMobile = window.innerWidth < 768;
+
+                document.getElementById('modelTitle').textContent = iem.name;
+                document.getElementById('graphModel').classList.add('active');
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+
+                const canvas = document.getElementById('frChart');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const gradient = ctx.createLinearGradient(0, 0, 0, 450);
+                gradient.addColorStop(0, 'rgba(81, 58, 197, 0.45)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+                const neutralGradient = ctx.createLinearGradient(0, 0, 0, 450);
+                neutralGradient.addColorStop(0, 'rgba(255, 145, 145, 0.3)');
+                neutralGradient.addColorStop(1, 'rgba(255, 145, 145, 0.0)');
+
+                const pointsIEM = iem.data.map((y, i) => ({ x: freqs[i], y: y }));
+                const pointsNeutral = iem.neutral_data
+                    ? iem.neutral_data.map((y, i) => ({ x: freqs[i], y: y }))
+                    : null;
+                const fillTargetIndex = pointsNeutral ? 3 : 2;
+                const pointsShewi = shewiComp.map((y, i) => ({ x: freqs[i], y: y }));
+                const pointsJM1 = jm1Comp.map((y, i) => ({ x: freqs[i], y: y }));
+                const pointsPrefTop = prefTop.map((y, i) => ({ x: freqs[i], y: y }));
+                const pointsPrefBottom = prefBottom.map((y, i) => ({ x: freqs[i], y: y }));
+
+                requestAnimationFrame(() => {
+                    chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            datasets: [
+                                {
+                                    label: iem.name,
+                                    data: pointsIEM,
+                                    borderColor: "#684EEB",
+                                    borderWidth: isMobile ? 1.8 : 2.5,
+                                    fill: fillTargetIndex,
+                                    backgroundColor: gradient,
+                                    order: 1
+                                },
+                                ...(pointsNeutral ? [{
+                                    label: `${iem.name} (Neutral FR)`,
+                                    data: pointsNeutral,
+                                    borderColor: '#ff9191',
+                                    borderWidth: isMobile ? 1.4 : 1.8,
+                                    fill: fillTargetIndex,
+                                    backgroundColor: neutralGradient,
+                                    order: 2
+                                }] : []),
+                                {
+                                    label: "Shewi Target (DFHRTF)",
+                                    data: pointsShewi,
+                                    borderColor: "#877CC1",
+                                    borderWidth: isMobile ? 1.5 : 2,
+                                    borderDash: [5, 5],
+                                    fill: false,
+                                    order: 3
+                                },
+                                {
+                                    label: "JM-1 DF (Tilt -1dB/Oct)",
+                                    data: pointsJM1,
+                                    borderColor: "#3a404d",
+                                    borderWidth: 1,
+                                    fill: false,
+                                    order: 4
+                                },
+                                {
+                                    label: "Preference Bounds (Top)",
+                                    data: pointsPrefTop,
+                                    borderColor: "#282e39",
+                                    borderWidth: 1,
+                                    fill: false,
+                                    order: 5
+                                },
+                                {
+                                    label: "Preference Bounds (Bottom)",
+                                    data: pointsPrefBottom,
+                                    borderColor: "#282e39",
+                                    borderWidth: 1,
+                                    fill: false,
+                                    order: 5
+                                }
+                            ]
+                        },
+                        options: {
+                            animations: {
+                                y: {
+                                    type: 'number',
+                                    duration: 750,
+                                    easing: 'easeOutQuart',
+                                    from: (c) => (c.chart.scales.y ? c.chart.scales.y.getPixelForValue(-20) : c.chart.height)
+                                }
+                            },
+                            maintainAspectRatio: false,
+                            responsive: true,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            elements: {
+                                point: { radius: 0 }
+                            },
+                            layout: {
+                                padding: isMobile ? { left: -4, right: 4, top: 0, bottom: 0 } : 0
+                            },
+                            scales: {
+                                x: {
+                                    type: 'logarithmic',
+                                    min: 20,
+                                    max: 20000,
+                                    grid: {
+                                        color: '#1f242d',
+                                        borderColor: '#30363d'
+                                    },
+                                    ticks: {
+                                        color: '#f5f5ff',
+                                        font: { family: 'Poppins', size: isMobile ? 8 : 11 },
+                                        padding: isMobile ? 2 : 6,
+                                        callback: function(val) {
+                                            const ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+                                            if (ticks.includes(val)) {
+                                                return val >= 1000 ? (val / 1000) + 'k' : val;
+                                            }
+                                            return null;
+                                        }
+                                    },
+                                    title: {
+                                        // Hidden on mobile to reclaim vertical height
+                                        display: !isMobile,
+                                        text: 'Frequency (Hz)',
+                                        color: '#f5f5ff',
+                                        font: { family: 'Poppins', size: 11 }
+                                    }
+                                },
+                                y: {
+                                    min: -20,
+                                    max: 20,
+                                    grid: {
+                                        color: '#1a1f26',
+                                        borderColor: '#30363d'
+                                    },
+                                    ticks: {
+                                        stepSize: 5,
+                                        color: '#f5f5ff',
+                                        font: { family: 'Poppins', size: isMobile ? 8 : 11 },
+                                        padding: isMobile ? 2 : 6,
+                                        callback: (val) => `${val} dB`
+                                    },
+                                    title: {
+                                        // Hidden on mobile to reclaim horizontal left margin
+                                        display: !isMobile,
+                                        text: 'dB',
+                                        color: '#f5f5ff',
+                                        font: { family: 'Poppins', size: 11 }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        filter: (item) => !item.text.includes('Preference Bounds'),
+                                        color: '#FFFFFF',
+                                        font: { family: 'Poppins', size: isMobile ? 9 : 12 },
+                                        boxWidth: isMobile ? 12 : 24,
+                                        padding: isMobile ? 6 : 10
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(16, 19, 25, 0.95)',
+                                    titleColor: '#f5f5ff',
+                                    bodyColor: '#f5f5ff',
+                                    borderColor: '#30363d',
+                                    borderWidth: 1,
+                                    titleFont: { family: 'Poppins', size: isMobile ? 10 : 12 },
+                                    bodyFont: { family: 'Poppins', size: isMobile ? 9 : 12 },
+                                    callbacks: {
+                                        title: (items) => `${Math.round(items[0].parsed.x)} Hz`,
+                                        label: (item) => ` ${item.dataset.label}:${item.parsed.y.toFixed(2)} dB`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // So overkill lol
+            function updatePopupPosition(item) {
+                const popup = item.querySelector('.param-popup');
+                if (!popup) return;
+
+                const itemRect = item.getBoundingClientRect();
+                const triggerCenter = itemRect.left + itemRect.width / 2;
+                const popupWidth = popup.offsetWidth;
+
+                const naturalLeft = triggerCenter - popupWidth / 2;
+                const naturalRight = triggerCenter + popupWidth / 2;
+                const padding = 16;
+                const vw = window.innerWidth;
+
+                let shift = 0;
+                if (naturalLeft < padding) {
+                    shift = padding - naturalLeft;
+                } else if (naturalRight > vw - padding) {
+                    shift = (vw - padding) - naturalRight;
+                }
+
+                popup.style.setProperty('--shift-x', `${Math.round(shift)}px`);
+            }
+
+            function updateAllPopups() {
+                document.querySelectorAll('.hoverable-param, .potential-header-hoverable').forEach(updatePopupPosition);
+            }
+
+            // Pre-calculate on load and resize so values are ready before hovering
+            window.addEventListener('resize', updateAllPopups);
+            window.addEventListener('DOMContentLoaded', updateAllPopups);
+            updateAllPopups();
+
+            // Ensure position is accurate on hover
+            document.querySelectorAll('.hoverable-param, .potential-header-hoverable').forEach(item => {
+                item.addEventListener('mouseenter', () => updatePopupPosition(item));
+            });
+        </script>
+    </body>
+</html>
