@@ -14,7 +14,7 @@ from utils import common_freq, read_file
 # Bass shelf level is arbitrary to match preference.
 
 PHONES = "neutral_fr/*.txt"
-OUTPUT = "Shewi Target (DFHRTF).txt"
+OUTPUT = "targets/Shewi Target (DFHRTF).txt"
 
 
 files = sorted(Path().glob(PHONES))
