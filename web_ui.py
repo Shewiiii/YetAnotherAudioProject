@@ -29,9 +29,8 @@ def normalize(spl: np.ndarray) -> np.ndarray:
 def best_normalized_curve(
     spl: np.ndarray,
     target_spl: np.ndarray,
-    weights: np.ndarray,
 ) -> tuple[np.ndarray, int]:
-    candidate_count = min(DATA_LIMIT, spl.size, target_spl.size, weights.size)
+    candidate_count = min(DATA_LIMIT, spl.size, target_spl.size)
     if candidate_count == 0:
         raise ValueError("Cannot normalize an empty frequency response")
 
@@ -41,8 +40,7 @@ def best_normalized_curve(
         spl[:candidate_count, None] - NORMALIZATION_SPL
     )
     errors = np.sum(
-        np.abs(target_spl[:comparison_limit] - candidate_curves)
-        * weights[:comparison_limit],
+        np.abs(target_spl[:comparison_limit] - candidate_curves),
         axis=1,
     )
     best_point = int(np.argmin(errors))
@@ -145,13 +143,10 @@ def init_data() -> dict:
 
     for iem, (freq, spl) in frequency_response_dict.items():
         if not EXCLUDE_PROJECTS or "project" not in iem.lower():
-            interpolated_spl = np.interp(
-                np.log10(common_freq), np.log10(freq), spl
-            )
+            interpolated_spl = np.interp(np.log10(common_freq), np.log10(freq), spl)
             spl_interp, normalization_point = best_normalized_curve(
                 interpolated_spl,
                 target_spl,
-                weights,
             )
             deltas[iem] = float(
                 np.sum(
@@ -209,7 +204,9 @@ def init_data() -> dict:
     return {
         "items": items,
         "total_count": len(items),
-        "median_potential": round(float(np.median(potentials)), 2) if potentials else 0.0,
+        "median_potential": round(float(np.median(potentials)), 2)
+        if potentials
+        else 0.0,
         "top_potential": potentials[0] if potentials else 0.0,
         "lowest_potential": potentials[-1] if potentials else 0.0,
         "freqs": sliced_freqs,
@@ -787,7 +784,7 @@ HTML_TEMPLATE = """
                 <span>Norm:</span>
                 <span class="hoverable-param">
                     Variable
-                    {% call popup("norm-popup") %}Attemps to find the best normalization frequency for each earphone.{% endcall %}
+                    {% call popup("norm-popup") %}Attemps to find the best normalization frequency for each earphone. Weights are ignored during calculation.{% endcall %}
                 </span> &nbsp;|&nbsp;
                 <span>Decay Factor:</span>
                 <span class="hoverable-param" onmouseenter="drawDecayChart()">
