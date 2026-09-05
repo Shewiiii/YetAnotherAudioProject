@@ -15,10 +15,13 @@ from utils import common_freq, read_file
 
 PHONES = "neutral_fr/*.txt"
 OUTPUT = "targets/Shewi Target (DFHRTF).txt"
+EXCLUDE = []
 
-
+phones = []
 files = sorted(Path().glob(PHONES))
-phones = [read_file(file) for file in files]
+for file in files:
+    if not file.name in EXCLUDE:
+        phones.append(read_file(file))
 
 spls = []
 
