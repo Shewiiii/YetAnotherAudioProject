@@ -1,5 +1,5 @@
 // Written with ChatGPT
-// Download every active phone (average left and right channels)
+// Download every active phone (average active channels/curves)
 // Should be used in JS Console of 
 // https://graph.hangout.audio/iem/5128/ 
 // https://earphonesarchive.squig.link/ 
@@ -45,32 +45,45 @@
         Array.isArray(value) && value.length >= 2 &&
         typeof value[0] === "number" && typeof value[1] === "number";
 
-    const averageChannels = (curves) => {
+    const getCurves = (p) => {
+        // Prioritize activeCurves; fall back to rawChannels or channels if missing
+        const src = (Array.isArray(p.activeCurves) && p.activeCurves.length > 0)
+            ? p.activeCurves
+            : (p.rawChannels || p.channels);
+
+        if (!src) return null;
+
+        // Directly formatted curve: [[freq, dB], ...]
+        if (Array.isArray(src) && isPoint(src[0])) return [src];
+        if (!Array.isArray(src)) return null;
+
+        // Extract curve data from objects ({ l: [...] }) or raw point arrays
+        return src
+            .map((item) => (item && Array.isArray(item.l) ? item.l : item))
+            .filter((item) => Array.isArray(item) && isPoint(item[0]));
+    };
+
+    const averageCurves = (curves) => {
         if (!Array.isArray(curves) || curves.length === 0) return null;
 
-        // A single available channel can still be wrapped in an array.
-        if (curves.length === 1 && Array.isArray(curves[0]) && isPoint(curves[0][0])) {
-            return curves[0];
-        }
+        // Already averaged or single channel
+        if (curves.length === 1) return curves[0];
 
-        // Some pages expose channels as one already-averaged [frequency, dB] curve.
-        if (isPoint(curves[0])) return curves;
-        if (curves.length < 2 || !Array.isArray(curves[0]) || !Array.isArray(curves[1])) {
-            return null;
-        }
-
-        const left = curves[0];
-        const right = curves[1];
-        return left.map(([f, yL]) => {
-            const yR = interp(right, f);
-            return [f, (yL + yR) / 2];
+        const [base, ...rest] = curves;
+        return base.map(([f, y0]) => {
+            let sum = y0;
+            for (let i = 0; i < rest.length; i++) {
+                sum += interp(rest[i], f);
+            }
+            return [f, sum / curves.length];
         });
     };
 
     activePhones.forEach((p) => {
         if (!INCLUDE_TARGETS && p.isTarget) return;
 
-        const avg = averageChannels(p.rawChannels || p.channels);
+        const curves = getCurves(p);
+        const avg = averageCurves(curves);
         if (!avg) return;
 
         const brand = p.dispBrand || p.brand?.name || "";
