@@ -31,11 +31,8 @@ PINNA_COEFF = 3
 NORMALIZATION_POINT = 272  # 223: ~500hz, 272: ~1kHz, see generated target from average.py
 NORMALIZATION_SPL = 60  # in dB but probably does not matter
 
-# Ignore FR above x Hz. 463: ~16kHz, ~~should probably not be changed~~
-# I decided to remove the limit to punish very bright IEMs (eg. Daybreak): 
-# yes it is not accurate that high in frequency but still relevant on a large scale
-# There is not many values anyways
-DATA_LIMIT = 481
+# Ignore FR above x Hz. 463: ~16kHz
+DATA_LIMIT = 463
 
 # Scale factor for exponential decay; lower = agressive drop, higher = flatter
 DECAY_FACTOR = 2700

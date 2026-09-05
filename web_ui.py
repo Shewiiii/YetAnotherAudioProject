@@ -113,12 +113,12 @@ def init_data() -> dict:
     tilt = -1.0 * octaves
     jm1_df_baseline = jm1_spl - tilt
 
-    shewi_comp = (target_spl - jm1_df_baseline)[:DATA_LIMIT]
-    jm1_comp = tilt[:DATA_LIMIT]
-    sliced_freqs = [round(float(f), 1) for f in common_freq[:DATA_LIMIT]]
+    shewi_comp = target_spl - jm1_df_baseline
+    jm1_comp = tilt
+    graph_freqs = [round(float(f), 1) for f in common_freq]
 
     # 4. Load & normalize Preference Bounds (no compensation baseline, normalized at 500 Hz)
-    target_log_freqs = np.log10(common_freq[:DATA_LIMIT])
+    target_log_freqs = np.log10(common_freq)
 
     top_file = find_target_file(PREF_BOUNDS_TOP)
     top_freq, top_spl = read_file(top_file)
@@ -164,7 +164,7 @@ def init_data() -> dict:
             )
             iem_normalization_points[iem] = normalization_point
 
-            comp_spl = (spl_interp - jm1_df_baseline)[:DATA_LIMIT]
+            comp_spl = spl_interp - jm1_df_baseline
             iem_curves_by_id[iem] = [round(float(v), 2) for v in comp_spl]
 
             neutral_curve = neutral_response_dict.get(iem)
@@ -179,7 +179,7 @@ def init_data() -> dict:
                     neutral_interp,
                     target_spl,
                 )
-                neutral_comp = (neutral_interp - jm1_df_baseline)[:DATA_LIMIT]
+                neutral_comp = neutral_interp - jm1_df_baseline
                 neutral_curves_by_id[iem] = [
                     round(float(v), 2) for v in neutral_comp
                 ]
@@ -237,7 +237,7 @@ def init_data() -> dict:
         else 0.0,
         "top_potential": potentials[0] if potentials else 0.0,
         "lowest_potential": potentials[-1] if potentials else 0.0,
-        "freqs": sliced_freqs,
+        "freqs": graph_freqs,
         "shewi_comp": [round(float(v), 2) for v in shewi_comp],
         "jm1_comp": [round(float(v), 2) for v in jm1_comp],
         "pref_top": [round(float(v), 2) for v in pref_top_comp],
@@ -263,6 +263,7 @@ def index():
         data=DATA_STORE,
         target_name=TARGET,
         decay_factor=DECAY_FACTOR,
+        data_limit_freq=POINT_TO_FREQ.get(DATA_LIMIT, f"point {DATA_LIMIT}"),
         weights={
             "sub": {
                 "coeff": SUB_COEFF,

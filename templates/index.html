@@ -94,6 +94,13 @@
                         weights.pinna.range }} | {{ weights.pinna.value_count }}
                         values{% endcall %}
                     </span>
+                    &nbsp;|&nbsp;
+                    <span>Data limit: </span>
+                    <span class="hoverable-param">
+                        {{ data_limit_freq }} {% call popup() %}Ignore
+                        data above that frequency in Potential calculation.{%
+                        endcall %}
+                    </span>
                 </p>
             </header>
 
