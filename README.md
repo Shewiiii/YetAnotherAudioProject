@@ -12,7 +12,7 @@ In simple terms, hopefully, the goal of this project is to:
 2.  Find the IEM with **potentially** the closest sound to that ideal.
 
 Technical explanation:  
-Each IEM in the "neutral_fr" folder has been equalized so every frequency is the same volume in a sinesweep, except in the bass as its harder to tell.  
+Each IEM in the "neutral_fr" folder has been equalized so every frequency is the same volume in a sinesweep, except in the bass as it is harder to tell.  
 I made sure it follows more or less the preference bounds, so the tilt is coherent (-1dB/ocatve).
 
 It has been done by ear and using 5128 data, so it can't come even close to what a measurement of the HRTF in the diffuse field of a lab can provide. But by averaging, my hope is to dilute HpTF effect (variation in frequency response not related to anatomy but the IEM load), as well as inaccuracies.
@@ -22,6 +22,10 @@ It is still insteresting to establish, as it
 tells what sound signature on average my brain expects to hear.
 
 Bass shelf level is arbitrary to match my current preference.
+
+## Results
+
+You can see the results here: https://iems.shewi.app/, or compile the project and run `web_ui.py`.
 
 ## Setup
 
@@ -86,7 +90,3 @@ In short, my goal with this project is to approximate this curve, then rank head
 Subjectively, EQing to smooth out all peaks and dips using a tone generator while broadly following this tilt yields an optimal musical timbre (what I have spent years searching for), lifting the veil of resonances and cancellations that previously colored the sound.
 
 On the other hand, many audiophiles feel that this kind of tuning lacks of "technicalities", especially at lower listening levels due to the equal-loudness contours.
-
-## Results
-
-You can see the results here: https://iems.shewi.app/, or compile the project and run `web_ui.py`.
