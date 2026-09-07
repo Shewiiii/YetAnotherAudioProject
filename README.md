@@ -23,6 +23,48 @@ tells what sound signature on average my brain expects to hear.
 
 Bass shelf level is arbitrary to match my current preference.
 
+## Setup
+
+Requirements: Python 3.10 or above.
+
+- Copy the repo.
+- Create a virtual environment.
+
+```bash
+python -m venv venv
+```
+
+OR
+
+```bash
+python3 -m venv venv
+```
+
+- Enable the venv.
+
+Windows:
+
+```bash
+./venv/Scripts/activate.bat
+```
+
+Linux:
+
+```bash
+source venv/bin/activate
+```
+
+- Install the dependencies.
+
+```bash
+pip install -r requirements.txt
+```
+
+- Run the webUI:
+```bash
+python web_ui.py
+```
+
 ## Theory and Conjecture behind the project
 
 I have been seeking for good sound quality in headphones and earphones for almost 10 years now. Over that time, I have noticed that answering "what is good sound?" is remarkably difficult. Not only is the hobby flooded with bias (eg. in reviews) and marketing BS, but nobody seems to truly agree.
