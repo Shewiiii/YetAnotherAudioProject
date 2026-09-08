@@ -83,9 +83,9 @@ When listening to headphones, sound travels directly through the pinna and the e
 
 Because of this, the **diffuse field** model becomes relevant. It represents a theoretical acoustic environment where sound remains identical regardless of the listener's orientation. We can therefore measure the subject's frequency response at the eardrum in a diffuse field: this is the DFHRTF (diffuse field head-related transfer function).
 
-From there, you simply apply a downward tilt of roughly -1 dB per octave to obtain a subjectively pleasing balance. This concept comes from Harman's loudspeaker research, which showed that an ideal in-room response slopes down at about -1 dB/octave due to the acoustic properties of a standard, non-anechoic room. Ultimately, a headphone that reproduces this exact tilted frequency response would theoretically deliver an anatomically optimal sound.
+From there, you simply apply a downward tilt of roughly -1 dB per octave to obtain a subjectively pleasing balance. This concept comes from Harman's loudspeaker research, which showed that an ideal in-room response slopes down at about -1 dB/octave due to the acoustic properties of a standard, non-anechoic room. Ultimately, an earphone that reproduces this exact tilted frequency response at the subject's eardrum would theoretically deliver an anatomically optimal sound.
 
-In short, my goal with this project is to approximate this curve, then rank headphones and earphones based on how closely they adhere to this tilted DFHRTF.
+In short, my goal with this project is to approximate this curve, then rank earphones based on how closely they adhere to this tilted DFHRTF.
 
 Subjectively, EQing to smooth out all peaks and dips using a tone generator while broadly following this tilt yields an optimal musical timbre (what I have spent years searching for), lifting the veil of resonances and cancellations that previously colored the sound.
 
